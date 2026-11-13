@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Exam Revision</title>
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--ink:#16201a;--mute:#5c6a62;--line:#dfe4de;--acc:#0f7a5c;--acc-ink:#fff;--ok:#1b9e4b;--bad:#d93025;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111815;--card:#1a2420;--ink:#eef3ef;--mute:#9aaaa1;--line:#2c3a33;--acc:#3ecf9a;--acc-ink:#06241a}}
+:root[data-theme="dark"]{--bg:#111815;--card:#1a2420;--ink:#eef3ef;--mute:#9aaaa1;--line:#2c3a33;--acc:#3ecf9a;--acc-ink:#06241a}
+*{box-sizing:inherit}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:640px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:1.7rem;margin:.2em 0 .1em;letter-spacing:-.02em}
+.sub{color:var(--mute);margin:0 0 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 18px}
+.chip{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 13px;font:inherit;font-size:.9rem;cursor:pointer}
+.chip.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.btn{background:var(--acc);color:var(--acc-ink);border:0;border-radius:12px;padding:13px 20px;font:inherit;font-weight:650;cursor:pointer;width:100%}
+.btn.alt{background:transparent;color:var(--ink);border:1.5px solid var(--line);margin-top:10px}
+label.n{font-weight:600;display:block}
+.inp{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:11px;margin:6px 0 4px}
+.bar{height:6px;background:var(--line);border-radius:9px;overflow:hidden;margin:6px 0 16px}.bar i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.meta{display:flex;justify-content:space-between;color:var(--mute);font-size:.85rem}
+.q{font-size:1.15rem;font-weight:600;margin:6px 0 16px}
+.prop{font-size:1.05rem;padding:12px 14px;border-radius:12px;background:color-mix(in srgb,var(--acc) 12%,var(--card));margin-bottom:14px;border-left:4px solid var(--acc)}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:10px;font:inherit;cursor:pointer;transition:background .35s ease,border-color .35s ease}
+.opt:hover:not(:disabled){border-color:var(--acc)}
+.opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 18%,var(--card))}
+.opt.wrong{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 18%,var(--card))}
+.opt:disabled{cursor:default}
+.exp{margin:14px 0;padding:12px 14px;border-left:4px solid var(--acc);background:color-mix(in srgb,var(--acc) 10%,var(--card));border-radius:8px;font-size:.95rem}
+.big{font-size:3rem;font-weight:800;margin:.1em 0}
+ul.miss{padding-left:18px;color:var(--mute)}ul.miss b{color:var(--ink)}
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:50}
+#flash.red{background:radial-gradient(ellipse at center,rgba(217,48,37,0) 38%,rgba(217,48,37,.8) 100%)}
+#flash.green{background:radial-gradient(ellipse at center,rgba(27,158,75,0) 38%,rgba(27,158,75,.75) 100%)}
+#flash.red.show{animation:pulse 1.5s cubic-bezier(.4,0,.2,1) forwards}
+#flash.green.show{animation:pulse 1s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes pulse{0%{opacity:0}35%{opacity:1}65%{opacity:1}100%{opacity:0}}
+.warn{background:var(--bad);color:#fff;border-radius:12px;padding:10px 14px;font-weight:650;margin:-8px 0 16px}
+.hide{display:none}
+</style></head>
+<body>
+<div id="flash"></div>
+<main>
+<section id="home">
+ <h1>Exam Revision</h1><p class="sub">Pick a class, how many questions, and the question type.</p>
+ <div class="card">
+  <label class="n">Class</label><div class="chips" id="classes"></div>
+  <label class="n">Topics</label><div class="chips" id="chips"></div>
+  <div id="warn" class="warn hide">No silly, this website is for exam revision/practice</div>
+  <label class="n" for="count">Number of questions</label>
+  <input id="count" class="inp" type="number" min="1" value="10" inputmode="numeric"><div class="sub" id="avail" style="font-size:.85rem"></div>
+  <label class="n">Question type</label><div class="chips" id="types"></div>
+  <button class="btn" id="start">Start quiz</button>
+ </div>
+</section>
+<section id="play" class="hide">
+ <div class="meta"><span id="pos"></span><span id="score"></span></div>
+ <div class="bar"><i id="prog"></i></div>
+ <div class="card">
+  <div class="meta" id="topic"></div><div class="q" id="q"></div>
+  <div id="body"></div>
+  <div id="exp" class="exp hide"></div>
+  <button class="btn alt hide" id="fix">Mark me correct</button>
+  <button class="btn hide" id="next" style="margin-top:10px">Next</button>
+ </div>
+</section>
+<section id="end" class="hide"><div class="card">
+ <div class="meta">Quiz complete</div><div class="big" id="final"></div><p id="msg" class="sub"></p>
+ <div id="missWrap" class="hide"><b>Review these:</b><ul class="miss" id="miss"></ul></div>
+ <button class="btn" id="again">Try again</button>
+ <button class="btn alt" id="redo">Redo only my mistakes</button>
+ <button class="btn alt" id="home2">Change settings</button>
+</div></section>
+</main>
+<script>
+// [topic, question, correct answer, [wrong answers], explanation]
+const SPORTS=[
+// Training Principles
+["Training principles","Ten days before a championship, a gymnast tapers. What is the most effective way?","Reduce volume and maintain intensity",["Reduce volume while increasing intensity","Increase volume while reducing intensity","Increase volume and maintain intensity"],"A taper cuts volume to allow recovery but keeps intensity so fitness is not lost."],
+["Training principles","Which is a sign of overtraining?","Persistent fatigue and reduced performance",["Decreased resting heart rate","Increased appetite","Reduced RPE during training"],"Overtraining shows as ongoing fatigue and worse performance (often with raised resting HR)."],
+["Training principles","A graph shows fitness rising quickly then levelling off. Which principle is this?","Diminishing returns",["Progression","Detraining","Overtraining"],"Early gains are rapid, then slow as fitness level increases."],
+["Training principles","A coach frequently adjusts a program to prevent boredom. Which principle is this?","Variety",["Specificity","Reversibility","Maintenance"],"Variety keeps training enjoyable and helps adherence."],
+["Training principles","How does the law of diminishing returns apply to training?","Initial rapid adaptations slow as fitness increases",["Athletes improve indefinitely with constant training","Changing routines has no effect on adaptations","Faster adaptations occur at higher fitness with less training"],"The fitter you are, the smaller the gains from the same effort."],
+["Training principles","Which principle is addressed by completing an activity analysis of a sport?","Specificity",["Variety","Reversibility","Progression"],"An activity analysis makes training specific to the movements, energy systems and fitness components of the sport."],
+["Training principles","A graph shows agility test improvement shrinking from 10% to almost 0% over seven weeks. Which principle?","Diminishing returns",["Progression","Reversibility","Individuality"],"Improvement gets smaller each week as the athlete approaches their limit."],
+["Training principles","After the competitive phase, a program has less volume but similar intensity. Which principle?","Maintenance",["Diminishing returns","Individuality","Variety"],"Maintenance keeps fitness at its current level, usually with reduced volume."],
+["Training principles","A cyclist can’t train for eight weeks because of a knee injury. Which principle explains the loss of adaptations?","Reversibility",["Progression","Variety","Individuality"],"Reversibility: “use it or lose it”. Adaptations are lost when training stops."],
+["Training principles","“Fitness gains slow as an athlete nears their genetic potential.” Which principle?","Diminishing returns",["Detraining","Progression","Overtraining"],"Gains get smaller closer to your genetic ceiling."],
+["Training principles","A 3 km runner runs 5 km once a week at 70% HR max and sees little improvement. Which principle is most likely incorrect?","Frequency",["Duration","Intensity","Specificity"],"Once a week is too infrequent to cause adaptations."],
+["Training principles","Which principle is gradually increasing the training load over time?","Progression",["Reversibility","Variety","Maintenance"],"Progression gradually overloads the body so it keeps adapting."],
+["Training principles","State what FITT stands for in training programs.","Frequency, Intensity, Time, Type",["Fitness, Intensity, Training, Time","Frequency, Individuality, Time, Technique","Fatigue, Intensity, Time, Type"],"Programs are critiqued using Frequency, Intensity, Time, Type (plus Progression)."],
+// Fitness components
+["Fitness components","Which component is “the ability to exert a force rapidly over a short period of time”?","Muscular power",["Muscular endurance","Flexibility","Aerobic power"],"E.g. sprint starts, long jump, javelin."],
+["Fitness components","Which component is how fast you move your body or body parts from one point to another?","Speed",["Agility","Muscular power","Anaerobic capacity"],"E.g. sprint events, accelerating away from an opponent."],
+["Fitness components","Which component is the capacity of a joint to move through its full range of motion?","Flexibility",["Muscular strength","Agility","Speed"],"E.g. gymnastics, ballet, rock climbing."],
+["Fitness components","Which component is the ability to change direction at speed while maintaining balance?","Agility",["Speed","Flexibility","Muscular power"],"E.g. sidestepping in AFL, dribbling past a defender in basketball."],
+["Fitness components","Which component is the ability of a muscle to produce the greatest possible force?","Muscular strength",["Muscular power","Muscular endurance","Speed"],"Strength = maximal force (e.g. 1RM). Power = force quickly."],
+["Fitness components","Which component is the ability of a muscle to sustain repeated contractions against resistance over time?","Muscular endurance",["Muscular strength","Aerobic power","Flexibility"],"E.g. cycling, rowing, kayaking, running."],
+["Fitness components","Anaerobic power vs capacity: what does capacity refer to?","How much energy (the total amount)",["How fast energy is produced","How long you can run","How flexible you are"],"Power = how fast, capacity = how much."],
+["Fitness components","Which energy system mainly supports muscular power and strength?","ATP-PC system",["Aerobic system","Glycolysis only","Lactic acid system only"],"Short, explosive efforts rely on the ATP-PC system."],
+["Fitness components","Which training method is HIIT with a 1:1 work:rest ratio mainly used for?","Aerobic power",["Flexibility","Muscular strength","Agility"],"Aerobic power methods: continuous, fartlek, long interval and 1:1 HIIT."],
+["Fitness components","Short interval training for speed uses efforts of what length and intensity?","3–10 s at 95%+ max effort",["60 s at 50% effort","5 min at 70% effort","30 s at 60% effort"],"Short, maximal efforts with long rests (about 1:5 work:rest)."],
+["Fitness components","Which stretching is used in the warm-up and which in the cool-down?","Dynamic in warm-up, static in cool-down",["Static in warm-up, dynamic in cool-down","Static in both","Dynamic in both"],"Dynamic stretching prepares the body; static stretching helps flexibility after."],
+// Fitness testing
+["Fitness testing","Which test measures aerobic capacity using a 12-minute effort?","Cooper’s 12-minute run",["Wingate test","Vertical jump","Sit and reach"],"Cones every 20 m; run as far as possible in 12 minutes."],
+["Fitness testing","Which test is used for lower-body muscular power?","Vertical jump",["Seated basketball throw","60 s push-up","1RM test"],"Seated basketball throw is the upper-body power test."],
+["Fitness testing","Which test is for muscular strength?","1 repetition maximum (1RM)",["30 s sit-up","Cooper’s run","20 m sprint"],"1RM = heaviest load lifted once."],
+["Fitness testing","Which is a test of anaerobic capacity?","30-second Wingate test",["Multi-stage fitness test","Sit and reach","Yo-Yo test"],"Phosphate Recovery and 30 s Wingate test anaerobic capacity."],
+["Fitness testing","Which tests are used for muscular endurance?","60 s push-up and 30 s sit-up",["Vertical jump and Wingate","Sit and reach and 1RM","20 m and 50 m sprint"],"Push-up = upper body, sit-up = core."],
+["Fitness testing","Which test measures flexibility?","Trunk flexion (sit and reach)",["Phosphate recovery","Vertical jump","Cooper’s run"],"Also shoulder and wrist elevation."],
+["Fitness testing","A VO₂ max test directly measures O₂ intake. It is a…","Direct test",["Indirect test","Field test only","Validity test"],"Direct tests measure the component itself. The beep test is indirect."],
+["Fitness testing","Why is the beep test an indirect test?","Results are compared to data to estimate VO₂ max",["It measures O₂ intake directly","It is done in a lab","It measures flexibility"],"It can’t measure O₂ intake, so VO₂ max is predicted from the score."],
+["Fitness testing","Which is true of lab tests compared with field tests?","More accurate but expensive and need specialist equipment",["Cheaper and test large groups","Less accurate","Only used in PE class"],"Field tests are cheaper and test big groups but are less accurate."],
+["Fitness testing","A test’s ability to measure what it is intended to measure is its…","Validity",["Reliability","Accuracy","Progression"],"E.g. the beep test measures aerobic capacity, not flexibility."],
+["Fitness testing","Producing consistent, repeatable results is called…","Reliability",["Validity","Variety","Specificity"],"Same time of day, warm-up, order, conditions and equipment."],
+["Fitness testing","Which improves test accuracy?","Calibrating equipment",["Testing at different times of day","Changing the order of tests","Using different footwear"],"Also: specialised technology and clear instructions."],
+["Fitness testing","Which is a purpose of fitness testing?","Establish baseline data and monitor training effectiveness",["Replace training","Increase muscle temperature","Prevent all injuries"],"Tests find strengths/weaknesses and inform program design."],
+["Fitness testing","Which factor decreases aerobic power by around 1% each year after age 25?","Age",["Gender","Capillary density","Flexibility"],"Aerobic power declines with age."],
+["Fitness testing","Which fibre type is advantageous for speed and anaerobic power?","Fast twitch",["Slow twitch","Smooth","Cardiac"],"Fast twitch contract quickly and with more force."],
+// Acute responses
+["Acute responses","Define the term “acute response”.","An immediate, short-term response to exercise",["A long-term adaptation","A response after 12 weeks","A response only at rest"],"Acute = short term. Chronic = long term adaptation."],
+["Acute responses","How do you calculate maximal heart rate?","220 minus age",["200 minus age","220 plus age","180 minus age"],"A 20-year-old has a maximal heart rate of 200 bpm (220 − 20)."],
+["Acute responses","Define the term “stroke volume”.","Blood pumped out of the left ventricle per beat",["Blood pumped out of the heart per minute","Beats per minute","Pressure in arteries"],"Plateaus at approx. 60% HR max."],
+["Acute responses","Which equation gives cardiac output?","Q = HR × SV",["Q = HR + SV","Q = SV ÷ HR","Q = RR × TV"],"Beyond submaximal levels, HR drives further increases in Q."],
+["Acute responses","Which equation gives ventilation?","V = RR × TV",["V = HR × SV","V = RR + TV","V = TV ÷ RR"],"Respiratory rate × tidal volume (L/min)."],
+["Acute responses","Systolic blood pressure is recorded…","During heart contraction, and is the higher value",["During relaxation, the lower value","At rest only","In the veins"],"Diastolic is during relaxation and is lower."],
+["Acute responses","Define the term “tidal volume”.","Volume of air moved in/out of the lungs per breath",["Breaths per minute","Air breathed per minute","Lung capacity"],"Measured in L/breath."],
+["Acute responses","Which are the muscle fuels used during exercise?","PC, glycogen and triglycerides",["Protein, water, salt","Oxygen only","Lactate only"],"Muscle energy stores decrease as intensity increases."],
+["Acute responses","Which is an acute muscular response to exercise?","Increased muscle temperature",["Larger heart","Increased capillary density","Increased mitochondria"],"Heat is a by-product of energy production."],
+// Oxygen uptake
+["Oxygen uptake","Define the term “oxygen deficit”.","O₂ demand exceeds O₂ supply at the start of exercise",["O₂ supply exceeds demand after exercise","A plateau in HR","Using no oxygen"],"There’s a lag in the body’s response when intensity increases."],
+["Oxygen uptake","Define the term “steady state”.","When O₂ supply meets O₂ demand",["O₂ demand exceeds supply","Recovery after exercise","Maximum heart rate"],"Usually reached in 2–5 minutes of aerobic exercise."],
+["Oxygen uptake","State what EPOC stands for.","Excess post-exercise oxygen consumption",["Extra pressure of oxygen capacity","Energy production of cells","Exercise power output capacity"],"O₂ supply exceeds demand during recovery. Greater after higher intensity and longer duration."],
+// Muscular system
+["Muscular system","Which muscle type is found only in the heart?","Cardiac",["Smooth","Skeletal","Striated"],"Cardiac is involuntary."],
+["Muscular system","Which muscle is voluntary, striped and attached to bones by tendons?","Skeletal",["Smooth","Cardiac","Connective"],"Skeletal muscle creates movement and fatigues easily."],
+["Muscular system","Where is smooth muscle found?","Blood vessels and digestive tract",["Attached to the skeleton","Only in the heart","Only in the limbs"],"It is involuntary and contracts slowly."],
+["Muscular system","In a muscle pair, the muscle that shortens is the…","Agonist",["Antagonist","Tendon","Ligament"],"The antagonist lengthens (reciprocal inhibition)."],
+["Muscular system","Which contraction shortens the muscle (e.g. bicep curl up)?","Concentric",["Eccentric","Isometric","Isokinetic"],"Eccentric = muscle lengthens (curl down)."],
+["Muscular system","Gripping a racquet or a wall squat is which contraction?","Isometric",["Concentric","Eccentric","Isokinetic"],"Muscle length stays the same."],
+["Muscular system","Which fibre type is white, fast, high in force and fatigues quickly?","Fast twitch",["Slow twitch","Smooth","Cardiac"],"Slow twitch is red, low force and fatigue resistant."],
+["Muscular system","Which activity suits slow twitch fibres?","Marathon",["100 m sprint","Shot put","Weightlifting"],"Slow twitch suit endurance."],
+["Muscular system","Muscles move bones by…","Pulling, not pushing",["Pushing","Twisting","Relaxing only"],"Muscles can contract or be stretched, they can’t push."],
+["Muscular system","Flexion is…","Decreasing the angle between bones",["Increasing the angle between bones","Moving away from the midline","Moving palms up"],"Extension increases the angle."],
+["Muscular system","Abduction is…","Moving away from the midline of the body",["Bringing towards the midline","Rotating around an axis","Pointing toes down"],"Adduction is towards the midline."],
+["Muscular system","Supination is…","Moving palms to face up",["Moving palms to face down","Sole facing inwards","Raising the foot"],"Pronation is palms down."],
+["Muscular system","Dorsiflexion is…","Raising the toes/foot up",["Pointing toes down","Sole facing out","Moving palms up"],"Plantar flexion points toes down."],
+["Muscular system","Inversion of the ankle is…","Sole facing inwards",["Sole facing outwards","Toes up","Toes down"],"Eversion is sole facing out."],
+// Critiquing programs
+["Critiquing programs","Which five areas do you use to critique a training program?","Frequency, Intensity, Time, Type, Progression",["Variety, Speed, Power, Age, Gender","Aerobic, Anaerobic, Strength, Speed, Agility","Warm-up, Skills, Cool-down, Diet, Sleep"],"Always link to the data."],
+["Critiquing programs","A critique MUST include…","Positive, negative, way to improve and effectiveness",["Only positives","Only a final score","A new program"],"1 mark each, using specific data."],
+["Critiquing programs","When evaluating a program you should…","Make an overall judgement. Don’t sit on the fence",["Say it is partly everything","List only negatives","Avoid deciding"],"Say if it’s effective or not."],
+["Critiquing programs","A training session design must include…","Warm-up, conditioning phase and cool-down",["Only a conditioning phase","Static stretching first","No cool-down"],"Warm-up: low-intensity aerobic + dynamic stretching. Cool-down: low-intensity aerobic + static stretching."],
+// Exam practice
+["Exam practice","Calculate the maximal heart rate of a 16-year-old.","204 bpm",["196 bpm","216 bpm","184 bpm"],"Maximal heart rate = 220 − age = 220 − 16 = 204 bpm."],
+["Exam practice","Calculate the target heart rate of a 40-year-old training at 70% of maximal heart rate.","126 bpm",["154 bpm","140 bpm","112 bpm"],"Max HR = 220 − 40 = 180, then 180 × 0.70 = 126 bpm."],
+["Exam practice","Calculate cardiac output when heart rate is 150 bpm and stroke volume is 120 mL.","18 L/min",["1.8 L/min","30 L/min","270 L/min"],"Q = HR × SV = 150 × 120 = 18,000 mL/min = 18 L/min."],
+["Exam practice","Calculate ventilation when respiratory rate is 30 breaths/min and tidal volume is 2.5 L.","75 L/min",["12 L/min","32.5 L/min","750 L/min"],"V = RR × TV = 30 × 2.5 = 75 L/min."],
+["Exam practice","Identify the dominant energy system used in a 100 m sprint.","ATP-PC system",["Aerobic system","Lactic acid system with oxygen","Glycolysis only"],"Short, explosive efforts rely on the ATP-PC system."],
+["Exam practice","Distinguish between muscular strength and muscular power.","Strength is the greatest force a muscle can produce. Power is force produced rapidly",["Strength is force over a long time. Power is the greatest force possible","They mean the same thing","Strength is speed. Power is flexibility"],"Strength = maximal force (1RM). Power = force quickly (e.g. vertical jump)."],
+["Exam practice","Identify one acute cardiovascular response to exercise.","Increased heart rate",["Decreased cardiac output","Decreased systolic blood pressure","Decreased stroke volume at all intensities"],"Heart rate rises immediately to deliver more oxygen to working muscles."],
+["Exam practice","Explain why dynamic stretching is included in a warm-up.","It moves joints through their range of motion and prepares the muscles for activity",["It lowers heart rate before the session","It increases flexibility permanently","It replaces the need for a cool-down"],"Dynamic stretching prepares the body. Static stretching is used in the cool-down."],
+["Exam practice","Justify why a runner who trains only once a week fails to improve.","Frequency is too low to cause training adaptations",["Specificity is too high","Training has too much variety","The athlete has reached maintenance"],"Link to the data: one session a week is too infrequent to overload the body."]
+];
+const ENGLISH=[
+// Animal Farm: Characters
+["Animal Farm: Characters","Old Major represents which historical figures?","Karl Marx & Vladimir Lenin",["Joseph Stalin","Leon Trotsky","Tsar Nicholas II"],"Old Major inspired the idea of equality and rebellion."],
+["Animal Farm: Characters","Mr Jones represents which historical figure?","Tsar Nicholas II",["Vladimir Lenin","Joseph Stalin","Leon Trotsky"],"He is the unfair ruler who is overthrown."],
+["Animal Farm: Characters","Napoleon represents which historical figure?","Joseph Stalin",["Leon Trotsky","Karl Marx","Tsar Nicholas II"],"A dictator who gains absolute power through fear."],
+["Animal Farm: Characters","Snowball represents which historical figure?","Leon Trotsky",["Joseph Stalin","Vladimir Lenin","Rasputin"],"A leader who is forced out by Napoleon."],
+["Animal Farm: Characters","Squealer represents…","Government propaganda",["The secret police","The working class","Blind followers"],"He spreads lies and manipulates the animals."],
+["Animal Farm: Characters","Boxer represents…","The working class",["The secret police","Government propaganda","The ruling class"],"Loyal, hardworking workers who are exploited."],
+["Animal Farm: Characters","The dogs represent…","The secret police",["The working class","Government propaganda","The middle class"],"They enforce Napoleon’s rule through fear and violence."],
+["Animal Farm: Characters","The sheep represent…","Blind followers",["The secret police","Revolutionary leaders","The middle class"],"They repeat propaganda without questioning it."],
+["Animal Farm: Characters","Which character shows intellect by reading the writing on the side of the van?","Benjamin",["Boxer","Squealer","Mollie"],"He uses literacy and observation to uncover the truth about Boxer."],
+["Animal Farm: Characters","The sheep chant “Four legs good, two legs bad”, which is later changed to…","Four legs good, two legs better",["All animals are equal","Napoleon is always right","Two legs bad, four legs worse"],"The sheep show a lack of independent thought and a herd mentality."],
+["Animal Farm: Characters","Which character says “Surely, comrades, you do not want Jones back?”","Squealer",["Napoleon","Benjamin","Boxer"],"Squealer uses persuasive language and fear to silence critical thinking."],
+["Animal Farm: Characters","Boxer’s new personal motto after Snowball is exiled is…","Napoleon is always right",["Four legs good, two legs better","All animals are comrades","Surely, comrades, you do not want Jones back?"],"Boxer is a blind follower who relies on others for his thoughts."],
+// Themes & intellect
+["Themes & intellect","Define the term “intellect”.","The ability to think critically, reason and make informed decisions",["Being able to read and write only","Following what leaders say","Being physically strong"],"Intellect is thinking critically rather than simply accepting what others say."],
+["Themes & intellect","Define the term “intellectual superiority”.","The belief that one person or group is smarter than others, often leading them to dominate",["Sharing knowledge equally with everyone","Having a university degree","Being the oldest animal"],"It can be used positively to educate or negatively to manipulate and exploit."],
+["Themes & intellect","Why do the pigs become the leaders?","They are the only animals who can read, write and organise",["They are the strongest","They were elected","They own the farm"],"They use their intelligence to gain privileges and power."],
+["Themes & intellect","Which is NOT one of the three core themes studied?","Friendship and loyalty",["The corruptive nature of power","Exploitation and class struggle","The failure of intellect"],"The three themes are corruptive power, exploitation/class struggle and failure of intellect."],
+// Narrative features
+["Narrative features","Define the term “satire”.","Humour, irony or exaggeration used to criticise people or ideas",["A story with a clear moral","A story told in first person","A story set in the past"],"Orwell mocks governments, propaganda, dictators and blind followers."],
+["Narrative features","Define the term “allegory”.","A story where characters and events represent real people, events or ideas",["A short story that teaches a moral","A story told in first person","A story with a happy ending"],"Animal Farm is an allegory of the Russian Revolution and the rise of the Soviet Union."],
+["Narrative features","Animal Farm uses which narrative perspective?","Third-person omniscient",["First person","Second person","Third-person limited"],"The narrator knows everything, like a bird’s-eye view."],
+["Narrative features","Define the term “dramatic irony”.","The reader knows more than the characters",["The characters know more than the reader","Saying the opposite of what you mean","Using exaggeration for humour"],"Readers see the pigs’ manipulation that the animals can’t."],
+["Narrative features","What does the windmill symbolise?","False promises, propaganda and exploitation",["Freedom and hope","Equal laws","The secret police"],"The animals work endlessly while Napoleon gains more control."],
+["Narrative features","What do the Seven Commandments represent?","Laws, political promises and equality",["Privilege and inequality","The working class","The secret police"],"When the pigs secretly change the rules, Orwell shows leaders manipulating the truth."],
+["Narrative features","The pigs taking the milk and apples symbolises…","Privilege and inequality",["Hope and freedom","False promises","Blind obedience"],"It’s the first sign the pigs are becoming a privileged ruling class."],
+["Narrative features","The flag with a horn and hoof symbolises…","Revolutionary ideals and hope",["Privilege and inequality","Propaganda","The secret police"],"It shows the animals’ dream of freedom, unity and equality."],
+["Narrative features","Define the term “fable”.","A short story with animals or non-human characters that teaches a moral",["A story about real historical events","A long poem","A story with magic and a prince"],"Animal Farm has fable elements but no stated moral."],
+["Narrative features","Why might Orwell call Animal Farm a “fairy-story”?","It shows purposeless cruelty happening to victims with no moral",["It has magic and a happy ending","It has a Prince Charming","It is written for young children only"],"Like the darker fairytales, bad things happen to unsuspecting victims."],
+// Russian Revolution
+["Russian Revolution context","Define the term “revolution”.","When people rise up against their leadership",["When leaders change laws peacefully","A type of election","A war between two countries"],"We often see revolutions against governments throughout history."],
+["Russian Revolution context","In “Peace, bread, land”, what does “peace” refer to?","An end to Russia’s involvement in WWI",["An end to the class system","Land for peasants","More food"],"Peace = ending involvement in WWI."],
+["Russian Revolution context","In “Peace, bread, land”, what does “bread” refer to?","A solution to a starving population",["An end to WWI","Land for peasants","A new Tsar"],"Bread = food for a starving population."],
+["Russian Revolution context","In “Peace, bread, land”, what does “land” refer to?","Giving people their own farms instead of working for the wealthy",["Winning territory in WWI","Moving to the cities","Taxing landlords"],"Land = an end to working for very little money."],
+["Russian Revolution context","What is the biggest group in the Russian social hierarchy?","Peasants",["The Tsar","The middle class","Army officers"],"Peasants had little money and poor living conditions."],
+["Russian Revolution context","Why was it hard to question the Tsar?","He was an absolute monarch believed to be appointed by God",["He was elected by the people","He owned all factories","He led the army alone"],"Questioning the Tsar meant questioning religion and the church."],
+["Russian Revolution context","Animal Farm is an allegory for which events?","The Russian Revolution of 1917 and the rise of the Soviet Union",["The French Revolution","World War II only","The American Civil War"],"Characters and events map onto real people and history."],
+// Quotes & essay writing
+["Quotes & essay writing","Strategy 1: a colon can only follow…","A complete sentence",["A single word","An explanatory phrase","A page number"],"Introduce the quote with a complete sentence, then a colon, then the quote."],
+["Quotes & essay writing","Strategy 2: an explanatory phrase is followed by…","A comma and the quote",["A colon and the quote","A full stop","No punctuation"],"E.g. The pigs retort, “[a]ll animals are equal…”"],
+["Quotes & essay writing","Strategy 3: when blending a quote into your own sentence you use…","No other punctuation between your words and the quote",["A colon","A comma before the quote","An ellipsis"],"Read it aloud to make sure your ideas flow."],
+["Quotes & essay writing","Strategy 4: what is an ellipsis (…) used for?","Leaving out words that aren’t relevant to your point",["Adding your own words","Showing a page number","Ending a paragraph"],"It lets you shorten a quote."],
+["Quotes & essay writing","State what ICE stands for when using quotes.","Introduce, Cite, Explain",["Identify, Compare, Evaluate","Introduce, Conclude, Explain","Include, Cite, Elaborate"],"The explanation AFTER the quote shows higher-level thinking."],
+["Quotes & essay writing","Where does the page number go when you quote?","In brackets after the quote",["Before the quote","At the end of the paragraph","In a footnote"],"E.g. (p.4)."],
+["Quotes & essay writing","Which two Es are the last two in TEEEL?","Evidence and Explore",["Explain and Elaborate","Example and Explain","Evaluate and Expand"],"Evidence and Explore are the last two Es in your TEEEL."],
+["Quotes & essay writing","Define the term “analysis”.","The why",["Retelling the plot","A list of quotes","Your opinion only"],"The majority of a body paragraph should be analysis."],
+["Quotes & essay writing","What should most of a body paragraph be?","Analysis",["Plot summary","Quotes","Definitions"],"More analysis!"],
+["Quotes & essay writing","How should an introduction preview your three main ideas?","Preview them without simply listing them",["Skip them","List them as bullet points","Save them for the conclusion"],"They are then developed in your body paragraphs."],
+["Quotes & essay writing","What is the purpose of an introduction?","A small-scale version of the key ideas the essay will discuss",["To retell the story","To list quotes","To give your personal opinion"],"A well-written introduction generates a successful essay."],
+["Quotes & essay writing","What should the topic sentence of a body paragraph do?","Clearly outline the main idea and link to key words in the topic",["Summarise the whole novel","Introduce a new quote","Conclude the essay"],"It tells the reader WHAT the paragraph is about."],
+// Exam practice
+["Exam practice","Which statement best explains how Orwell uses Squealer to show the manipulation of language?","He uses persuasive language and fear to silence critical thinking",["He tells the truth to the animals","He leads the rebellion against Jones","He is a loyal worker who never questions"],"Squealer represents propaganda: he twists facts and threatens the animals with Jones’s return."],
+["Exam practice","Explain the significance of the pigs secretly changing the Seven Commandments.","It shows leaders rewriting the rules to justify their privilege and control",["It shows the animals making their own laws","It shows the farm becoming more equal","It shows Mr Jones returning to power"],"Changing the rules shows leaders manipulating the truth while the animals fail to notice."],
+["Exam practice","Which topic sentence best links to the theme of the corruptive nature of power?","Orwell demonstrates that power corrupts through Napoleon’s gradual transformation into a tyrant.",["Napoleon is a pig in Animal Farm.","Napoleon represents Joseph Stalin.","The animals work hard on the windmill."],"A strong topic sentence outlines the main idea and links to the key words in the topic."],
+["Exam practice","Which sentence correctly introduces a quote using a colon (Strategy 1)?","Squealer silences the animals with fear: “Surely, comrades, you do not want Jones back?”",["Squealer silences the animals with fear, “Surely, comrades, you do not want Jones back?”","Squealer silences the animals with fear “Surely, comrades, you do not want Jones back?”","Squealer silences the animals with; “Surely, comrades, you do not want Jones back?”"],"A colon can only follow a complete sentence."],
+["Exam practice","In a body paragraph, which part shows higher-level thinking?","Explaining WHY the quote or technique supports your argument",["Retelling what happens in the plot","Listing several quotes in a row","Repeating the topic sentence"],"Analysis is the why. Most of a body paragraph should be analysis."],
+["Exam practice","Explain how Boxer demonstrates the failure of intellect.","He accepts Napoleon’s version of events without questioning it",["He questions every decision the pigs make","He reads the writing on the van","He leads the rebellion"],"Boxer’s motto “Napoleon is always right” shows a blind follower who relies on others for his thoughts."],
+["Exam practice","Explain why Orwell uses animals as characters.","It makes the political satire accessible and lets him criticise the Soviet Union indirectly",["It makes the story a children’s fable with a moral","It avoids any link to real history","It makes the story less critical"],"Animal Farm is an allegory and satire of the Russian Revolution and the rise of the Soviet Union."],
+["Exam practice","Which piece of context best supports an essay on exploitation and class struggle?","Russian peasants worked for little money while the ruling class stayed wealthy",["The Tsar was believed to be appointed by God","Russia was involved in WWI","The revolution happened in 1917"],"Link the context to how the pigs become a privileged ruling class exploiting the other animals."]
+];
+// To add a class: make a new array like the ones above and add it here.
+const HEALTH=[
+// Health & wellbeing and data
+["Health & wellbeing and data","How many dimensions of health and wellbeing are there?","5",["3","4","6"],"Physical, social, emotional, mental and spiritual."],
+["Health & wellbeing and data","For a 2-mark health and wellbeing question, how many dimensions do you refer to?","One",["Two","Three","All five"],"For OVERALL health and wellbeing (4 marks) you refer to two different dimensions."],
+["Health & wellbeing and data","Which dimension relates to the functioning of the body and its systems?","Physical",["Mental","Social","Spiritual"],"It includes the capacity to perform daily activities and tasks."],
+["Health & wellbeing and data","Which dimension is the ability to form meaningful and satisfying relationships?","Social",["Physical","Mental","Emotional"],"It also includes adapting appropriately to different social situations."],
+["Health & wellbeing and data","Positive self-talk and meditation mainly improve which dimension?","Mental",["Physical","Social","Spiritual"],"Positive self-talk = high confidence. Meditation = low stress and anxiety."],
+["Health & wellbeing and data","Which pair of letters best describes the five parts of a data trend answer?","Who, What, When, Direction, Data",["Why, What, Where, Direction, Detail","Who, Which, When, Decrease, Date","What, Who, Why, Data, Duration"],"Use every part, every time (3W + 2D)."],
+["Health & wellbeing and data","A 2-mark trend question gives marks for…","1 mark for the trend and 1 mark for data with its unit",["2 marks for the trend","1 mark for who and 1 for when","1 mark for the unit only"],"If you leave out the unit (e.g. mg) you lose the data mark."],
+["Health & wellbeing and data","If you can’t read an exact number from a graph, you should write…","Approximately (approx.)",["Nothing","A range only","The highest number"],"Say approximately when you don’t know exactly."],
+["Health & wellbeing and data","From 1906 to 2014, male child death rates…","Decreased from about 2,600 to about 150 per 100,000",["Increased from about 150 to about 2,600 per 100,000","Stayed about the same","Decreased from about 2,200 to about 100 per 100,000"],"That’s a decreasing trend with data including the unit."],
+["Health & wellbeing and data","Female premature deaths (ages 15–64) are highest in which socioeconomic group?","Lowest SES",["Highest SES","Middle SES","They are equal"],"They increase as SES decreases, from 100 to 160 per 100,000."],
+// Self-talk & problem solving
+["Self-talk & problem solving","Optimistic thinkers are more likely to…","Cope better with stress and hard times",["Get sick more often","Give up when challenged","Have higher levels of distress"],"Optimism is linked to lower distress and a lower risk of depression."],
+["Self-talk & problem solving","Thinking you know what other people think about you is called…","Mind-reading",["Overreacting","Exaggerating","Ignoring the positives"],"It’s one of the six common mind-traps of pessimistic thinking."],
+["Self-talk & problem solving","“I gave the wrong answer, so I’m stupid” is which mind-trap?","Overreacting",["Mind-reading","Blaming others","Ignoring the positives"],"Arguing back: “I can’t get everything right yet, but I’m making progress.”"],
+["Self-talk & problem solving","What does “arguing back” mean in self-talk?","Challenging negative thinking with a more helpful thought",["Arguing with other people","Ignoring your feelings","Agreeing with negative thoughts"],"It helps you contest pessimistic mind-traps."],
+["Self-talk & problem solving","How many steps are in the problem-solving tool?","6",["3","4","5"],"Name the challenge, brainstorm, advantages/disadvantages, choose, describe, assess."],
+["Self-talk & problem solving","What is Step 1 of problem solving?","Name the problem or challenge",["Choose an option","Brainstorm actions","Assess the solution"],"Step 2 is brainstorming all the possible actions."],
+["Self-talk & problem solving","In Step 3 of problem solving you…","Identify advantages and disadvantages of each option (scored out of 10)",["Choose the easiest option","Describe how it will sound","Decide if it is short- or long-term"],"The chosen option doesn’t always have the highest score."],
+["Self-talk & problem solving","Step 6 of problem solving asks you to…","Assess if it is a short- or long-term solution and when to review it",["Name the challenge","Brainstorm more actions","Score each option"],"It’s about whether the solution needs reviewing."],
+// Healthy relationships
+["Healthy relationships","Which four characteristics must be present in a healthy relationship (Family Planning Victoria)?","Consent, communication, mutuality and respect",["Trust, jealousy, loyalty and gifts","Consent, secrecy, mutuality and respect","Respect, control, communication and honesty"],"A lack or imbalance of these may mean a relationship is unhealthy."],
+["Healthy relationships","What does mutuality mean in a relationship?","The relationship is good for both partners",["One partner makes the decisions","Partners must agree on everything","Partners never disagree"],"Sexual activity should be pressure- and guilt-free, enjoyable and safe."],
+["Healthy relationships","Messages like “Send me your location. Who are you with? You better not be lying” show…","Controlling and unhealthy behaviour",["Healthy communication","A normal friendship","Respect for boundaries"],"It’s a warning sign of an unhealthy relationship."],
+["Healthy relationships","“I’m still upset. Please don’t do it again.” is an example of…","Healthy communication of feelings and boundaries",["Controlling behaviour","Coercion","Pressure"],"Both partners should feel free to express their feelings."],
+["Healthy relationships","Why can media relationships like Twilight be problematic?","They show control and stalking-like behaviour as romantic",["They show too much communication","They show equal power","They have no relationships"],"Media doesn’t always show realistic or healthy relationships."],
+// Consent
+["Consent","“No” always means…","No",["Maybe","Try again later","Ask a friend"],"A lack of an affirmative, freely given “yes” is also a “no”."],
+["Consent","Consent can be withdrawn…","At any time",["Only at the start","Only if you say so in writing","Never once it’s given"],"People can change their mind at any point."],
+["Consent","Can consent be given by someone who is under the influence of drugs or alcohol?","No",["Yes, if they say yes","Yes, if they’re in a relationship","Only for kissing"],"Consent can’t be assumed, implied or given when someone is affected."],
+["Consent","State what FRIES stands for in consent.","Freely given, Reversible, Informed, Enthusiastic, Specific",["Fun, Respect, Individual, Equal, Safe","Freely given, Respectful, Informed, Equal, Safe","Fair, Reversible, Informed, Explicit, Sure"],"Consent is a conversation."],
+["Consent","Define the term “affirmative consent”.","Ongoing, enthusiastic and explicit communication showing willing participation",["Saying nothing means yes","Agreeing once for all future activity","Agreement from a friend"],"Consent alone is just a voluntary agreement to engage in sexual activity."],
+["Consent","Define the term “coercion”.","Being talked into doing something sexual, repeatedly or ongoing",["Being given a genuine chance to say no","Using physical force","A one-off joke"],"Pressure is not being given a genuine opportunity to say no. Force is physical."],
+["Consent","Sexual harassment includes…","Unwelcome behaviour like jokes, pressure for sex or continually invading space",["Respectful conversation","Asking for consent","Saying no"],"Sexual assault, harassment and rape are illegal."],
+["Consent","Which service offers 24/7 crisis counselling for sexual assault?","CASA (Centre Against Sexual Assault)",["Victoria Police only","Family Planning clinics","School canteen"],"CASA: 1800 806 292. Kids Helpline (1800 551 800) supports ages 5–25."],
+// Consent and the law
+["Consent and the law","What is the legal age of consent in Victoria?","16",["12","14","18"],"The age of consent varies between Australian states and territories."],
+["Consent and the law","Can a person under 12 ever give consent?","No, never",["Yes, if they agree","Yes, with a parent’s permission","Yes, if close in age"],"No-one can legally do anything sexual with a person under 12."],
+["Consent and the law","For partners aged 12–15, the maximum age difference is…","24 months (2 years)",["6 months","5 years","No limit"],"This protects young people from being taken advantage of."],
+["Consent and the law","Between ages 16 and 17, a person cannot have a sexual partner who is…","In a position of care, supervision or authority over them",["The same age","In a different school","A friend"],"This applies even with agreement, e.g. a coach."],
+["Consent and the law","Sexual activity with someone who is asleep or unconscious is…","Sexual assault",["Fine if they didn’t say no","Fine in a relationship","Not a crime"],"They can’t agree, so there is no consent."],
+// Digital safety
+["Digital safety","Taking or sharing nude or semi-nude images of someone under 18 is…","Illegal, even if it is consensual or of yourself",["Legal if both people agree","Legal in a relationship","Legal if you delete it"],"Teens as young as 14 have been charged."],
+["Digital safety","Can you ever “safely sext”?","No, accidents like a lost phone or wrong recipient can still happen",["Yes, if you trust the person","Yes, if you use a password","Yes, if you delete it quickly"],"An infinite number of copies can be made and shared."],
+["Digital safety","Define the term “digital reputation”.","The evidence of your online interactions, comments and behaviour",["How many followers you have","Your offline reputation only","Your password"],"It is as real and important as your general reputation."],
+["Digital safety","What you say, do and share online is…","There forever and can be impossible to fully delete",["Deleted after a week","Only visible to friends","Private"],"A digital trail is hard to remove."],
+// Contraception
+["Contraception","What do barrier contraceptives do?","Place a physical barrier between sperm and the vagina",["Stop ovulation","Change your hormones","Kill sperm with heat"],"Sperm can’t enter the cervix."],
+["Contraception","How effective are male condoms when used correctly?","98%",["75%","88%","100%"],"They are cheap and available at supermarkets, pharmacies and sexual health clinics."],
+["Contraception","How effective are female condoms?","95%",["98%","88%","60%"],"They are harder to access than male condoms."],
+["Contraception","What is a dam used for?","Protection during oral sex",["Preventing pregnancy","Emergency contraception","Replacing a condom for intercourse"],"It reduces STI risk but isn’t recommended for pregnancy protection."],
+["Contraception","What does a diaphragm do?","Covers the cervix and stops sperm entering the uterus",["Releases hormones","Stops ovulation","Blocks the fallopian tubes permanently"],"It must stay in place for at least six hours and be fitted by a doctor or nurse."],
+["Contraception","Hormonal contraceptives use…","Synthetic oestrogen and progesterone",["Latex","Antibiotics","Spermicide only"],"They regulate cycles and prevent pregnancy."],
+["Contraception","How does the combined pill work?","Stops eggs being released and thickens cervical mucus",["Blocks sperm with latex","Kills STIs","Covers the cervix"],"It is 99% effective if taken at the same time each day."],
+["Contraception","The mini pill contains…","Only progesterone",["Only oestrogen","Both oestrogen and progesterone","No hormones"],"It works by thickening cervical mucus."],
+["Contraception","The morning-after pill is most effective when taken within…","24 hours (up to 96 hours)",["7 days","2 weeks","1 hour only"],"It delays ovulation or stops a fertilised egg implanting."],
+["Contraception","Which type of contraception is most effective at protecting against STIs?","Barrier",["Hormonal","Chemical","The combined pill"],"It adds a physical layer between skin-to-skin contact."],
+["Contraception","Who must agree about using contraception?","Both partners",["Only the male partner","Only the female partner","Neither"],"Removing a condom without consent (stealthing) has legal ramifications."],
+// STIs
+["STIs","Define the term “STI”.","An infection passed from person to person through sexual activity",["An infection caught only from food","An infection only women get","An infection from sharing water"],"STIs can affect anybody regardless of sex."],
+["STIs","STIs can be spread by…","Skin-to-skin contact and oral, anal or vaginal sex",["Sharing a handshake only","Sitting on toilet seats only","Coughing"],"Direct contact with an STI or open wounds is the highest risk."],
+["STIs","What are the three categories of STIs?","Bacteria, virus and parasite",["Fungus, virus and bacteria","Bacteria, protein and parasite","Virus, mould and parasite"],"They are based on the type of infection and how it’s treated."],
+["STIs","Which is a bacterial STI?","Chlamydia",["HIV","HPV","Pubic lice"],"Gonorrhoea and syphilis are also bacterial."],
+["STIs","How are bacterial STIs treated?","With antibiotics prescribed by a health professional",["They can’t be treated","With lotion from a pharmacy","They go away on their own"],"Symptoms should always be checked by a health professional."],
+["STIs","Which of these is a viral STI?","HIV",["Chlamydia","Syphilis","Pubic lice"],"Others: genital herpes, hepatitis B and HPV."],
+["STIs","Can viral STIs be cured?","No, the person has the virus for life but medication can manage symptoms",["Yes, with antibiotics","Yes, with lotions","Yes, in a week"],"Medication manages signs and symptoms."],
+["STIs","Pubic lice are which type of STI?","Parasitic",["Bacterial","Viral","Fungal"],"Treat with a pharmacy cream and wash bedding, towels and clothing."],
+["STIs","If you are sexually active with multiple partners, how often should you get checked?","Once a year",["Every 10 years","Never","Only if you feel sick"],"Get checked sooner if you show any signs or symptoms."],
+// Exam practice
+["Exam practice","Which is the best 2-mark answer for describing a data trend?","Male child death rates decreased from approx. 2,600 to approx. 150 per 100,000 between 1906 and 2014.",["Male child death rates went down.","Death rates were lower in 2014.","Male child death rates decreased between 1906 and 2014."],"Include who, what, when, direction and data with its unit."],
+["Exam practice","Joining a netball team to make friends mainly improves which dimension of health and wellbeing?","Social",["Physical","Mental","Spiritual"],"The social dimension is about forming meaningful and satisfying relationships."],
+["Exam practice","Explain how positive self-talk can improve health and wellbeing.","It builds confidence, improving the mental dimension",["It improves physical strength directly","It removes all stress","It replaces social connections"],"Positive self-talk = high confidence, which supports mental health and wellbeing."],
+["Exam practice","Distinguish between pressure and force in a sexual context.","Pressure is not being given a genuine chance to say no. Force is physical",["Pressure is physical. Force is verbal","They mean the same thing","Pressure is legal. Force is illegal"],"Both are unacceptable and both mean there is no consent."],
+["Exam practice","A 14-year-old agrees to a sexual relationship with a 17-year-old. Which statement is correct under Victorian law?","The age difference is more than 24 months, so it is illegal even though both agree",["It is legal because both agree","It is legal because the older person is under 18","It is legal if the parents agree"],"For partners aged 12–15, the maximum age difference is 24 months."],
+["Exam practice","Identify Step 4 of the problem-solving tool.","Choose the best option",["Name the challenge","Brainstorm actions","Assess the solution"],"The steps are: name, brainstorm, advantages/disadvantages, choose, describe, assess."],
+["Exam practice","Justify why condoms are recommended over the combined pill for sexually active teens.","They are a barrier that protects against pregnancy and reduces STI risk",["They are cheaper than all other methods","They stop ovulation","They contain hormones"],"Barrier methods add a physical layer, so they protect against STIs as well as pregnancy."],
+["Exam practice","Explain why bacterial and viral STIs are managed differently.","Bacterial STIs can be treated with antibiotics. Viral STIs can’t be cured, only managed",["Bacterial STIs can’t be treated. Viral STIs are cured with antibiotics","Both are cured with a lotion","Both go away on their own"],"A health professional should always check symptoms."]
+];
+const OUTDOOR=[
+// Technology
+["Technology","What are technology developments in outdoor experiences?","Advancements and modifications to clothing and equipment that enhance participation",["New outdoor activities only","Rules set by park rangers","Changes to the weather"],"E.g. communication devices, navigation devices, synthetic clothing."],
+["Technology","An EPIRB is which type of technology?","A communication device (distress beacon)",["A navigation device","A synthetic material","A specialised facility"],"Radios and smartphones are also communication devices."],
+["Technology","Which of these is a synthetic material used in outdoor clothing?","Gore-Tex",["Cotton","Wool felt","Canvas"],"Others: fleece, polypropylene, Dri-FIT, nylon and smartwool."],
+["Technology","A handheld or wearable GPS is a…","Navigation device",["Communication device","Specialised facility","Synthetic material"],"Navigation devices help with finding position and route."],
+["Technology","Which is a specialised activity facility?","Indoor rock-climbing gym",["A kermantle rope","A fleece jacket","A handheld GPS"],"Others: surf park, indoor skydiving, whitewater park."],
+["Technology","Which is a positive influence of technology on outdoor experiences?","A greater level of safety",["A false sense of security","Disconnection from the environment","Higher impact on the environment"],"It can also give higher comfort and a greater sense of security/control."],
+["Technology","Which is a negative influence of technology on outdoor experiences?","A false sense of security",["A higher level of comfort","A greater sense of control","Greater appreciation of nature"],"It can also disconnect people from the environment."],
+["Technology","How have surfboards evolved through technology?","Heavy solid timber, then foam and fibreglass, then lighter epoxy and soft-top boards",["They have always been made of foam","Fibreglass, then back to solid timber","They have only changed colour"],"Early timber boards could weigh 40–50 kg. Modern boards are light and easier to carry and turn."],
+["Technology","Which is a negative environmental impact of modern surfboards?","Foam and resin are made from petrochemicals and are hard to recycle",["They are made from native forests","They float too well","They erode beaches"],"Broken boards often end up in landfill. Some brands now use recycled or plant-based materials."],
+["Technology","How have tents evolved through technology?","Heavy canvas with wooden poles, then light nylon or polyester with aluminium or fibreglass poles",["Nylon first, then heavy canvas","They haven’t changed","Only the colour has changed"],"Modern tents are lighter, waterproof and faster to pitch."],
+["Technology","Which is a positive impact of lightweight tents on users?","They are lighter to carry, so people can hike further and in more comfort",["They make campers less aware of the weather","They encourage people to camp anywhere","They never need checking"],"A lighter pack means less fatigue and more enjoyment."],
+["Technology","Which is a negative environmental impact of synthetic tents and clothing?","They are made from plastics that shed microplastics and end up in landfill",["They grow into weeds","They attract wildlife","They make soil richer"],"Repairing and reusing gear helps reduce this."],
+["Technology","How has navigation technology evolved?","Paper map and compass, then handheld GPS units, then smartphone apps and satellite messengers",["Smartphones first, then GPS, then maps","GPS has existed for centuries","Navigation hasn’t changed"],"Many devices can now also send an SOS."],
+["Technology","Which is a negative impact of GPS on users?","Over-reliance, so people may get lost if the battery dies or the signal drops",["It makes position more accurate","It can help in emergencies","It shows your route"],"Always carry a map and compass as a back-up."],
+["Technology","How have bikes evolved through technology?","Heavy steel frames, then aluminium and carbon fibre with suspension and disc brakes",["Carbon fibre first, then steel","They have always had suspension","Only the tyres have changed"],"E-bikes now add electric assistance."],
+["Technology","Which is a negative environmental impact of mountain bike technology?","Access to more remote terrain can increase trail erosion and damage to vegetation",["Bikes plant new trees","Suspension cleans the trails","It reduces visitors to parks"],"Staying on built trails reduces the impact."],
+// Navigation
+["Navigation & compass","Define the term “navigation”.","Accurately working out your position and planning and following a route",["Only using a GPS","Walking in a straight line","Reading the weather"],"It involves gathering and evaluating information, then making decisions."],
+["Navigation & compass","What is the compass bearing for North?","0° (360°)",["90°","180°","270°"],"North is 0°/360°."],
+["Navigation & compass","What is the compass bearing for East?","90°",["0°","180°","270°"],"Going clockwise: N 0°, E 90°, S 180°, W 270°."],
+["Navigation & compass","What is the compass bearing for South?","180°",["90°","270°","360°"],"South is directly opposite North."],
+["Navigation & compass","What is the compass bearing for West?","270°",["90°","180°","0°"],"West is directly opposite East."],
+// Safe participation
+["Safe participation","What are the four parts of the 4-Part Planning Framework?","Activity, Environment, Weather, Equipment",["People, Place, Time, Cost","Activity, Food, Water, Equipment","Skills, Weather, Map, Compass"],"Check each before an outdoor experience."],
+["Safe participation","Does very remote location mean you can lower safety standards?","No, remoteness increases risk because help takes longer",["Yes, fewer people can be hurt","Yes, if you have a map","Only in summer"],"Your planning and equipment must be even better."],
+["Safe participation","Define the term “hazard”.","Anything that could cause injury or danger",["How likely harm is to occur","A safety plan","An emergency exit"],"A risk is how likely the hazard is to cause harm and how serious the outcome could be."],
+["Safe participation","In the risk matrix, a LIKELY chance with SEVERE impact is rated…","Extreme",["Low","Medium","High"],"Rare + Minor is Low. Possible + Moderate is Medium."],
+["Safe participation","In the risk matrix, a RARE chance with MINOR impact is rated…","Low",["Medium","High","Extreme"],"The matrix compares likelihood against impact."],
+["Safe participation","Which is group safety gear rather than personal gear?","First aid kit",["Sun hat","2+ litres of water","Waterproof jacket"],"Other group gear: map, compass, satellite phone or PLB, emergency shelter."],
+["Safe participation","Which is personal gear?","Waterproof jacket and sturdy boots",["Emergency tarp","Satellite phone","Group first aid kit"],"Personal gear protects against hypothermia, dehydration and exposure."],
+// Risk
+["Risk","Define the term “risk”.","The potential to lose something you value, measured against the possibility of gaining something you value",["Only the chance of injury","Something that can always be avoided","The cost of equipment"],"What you could lose may be physical, psychological or financial."],
+["Risk","Define the term “absolute risk”.","The upper limit of risk in a situation, the worst-case scenario",["The risk that actually exists","An individual’s opinion of the risk","The risk after safety measures"],"Perceived = subjective. Real/actual = what actually exists."],
+["Risk","Define the term “perceived risk”.","An individual’s subjective assessment of the risk",["The worst-case scenario","The risk that actually exists","Risk that is zero"],"A novice climber may think a climb is very risky."],
+["Risk","Define the term “real (actual) risk”.","The amount of risk that actually exists at a given time",["The worst-case scenario","What someone thinks the risk is","A guess by the leader"],"With safety measures in place, real risk can be quite low."],
+["Risk","Which are the three categories of risk when thinking about outdoor activities?","People, equipment and environment",["Time, money and food","Fitness, weather and music","Leader, map and camp"],"E.g. skill, equipment failure, weather and terrain."],
+["Risk","Which are safety measures for rock climbing?","Harness, rope, helmet, bolts, belayer and back-up belayer",["Gloves only","A GPS","A snack and a hat"],"These keep the real risk low."],
+["Risk","Which model compares competence with difficulty?","The adventure paradigm",["The risk matrix","The 4-Part Planning Framework","The ecological footprint"],"Levels: Exploration, Adventure, Peak Adventure, Misadventure, Devastation & Disaster."],
+["Risk","In the adventure paradigm, an activity that is too easy leads to…","Exploration (boredom)",["Peak adventure","Misadventure","Disaster"],"If it’s too hard, you move towards misadventure and disaster."],
+["Risk","A tired participant or someone with low skill or poor fitness is which type of risk?","People risk",["Equipment risk","Environment risk","No risk"],"People risks come from the participants and leaders themselves."],
+["Risk","A frayed rope, leaking tent or flat bike tyre is which type of risk?","Equipment risk",["People risk","Environment risk","Absolute risk"],"Equipment risks come from gear that fails, is damaged or is used wrongly."],
+["Risk","A rip current, sudden storm or slippery rocks are which type of risk?","Environment risk",["People risk","Equipment risk","Perceived risk"],"Environment risks come from weather, terrain and water conditions."],
+["Risk","How can you reduce a people risk such as poor skill?","Give a safety briefing, teach skills, use a buddy system and supervise closely",["Ignore it","Make the activity harder","Leave the person behind"],"Matching the activity to the group’s ability keeps the real risk low."],
+["Risk","How can you reduce an equipment risk?","Check gear before every use and repair or replace anything damaged",["Use the oldest gear first","Only check gear after an accident","Share one helmet"],"Also make sure gear fits properly and people know how to use it."],
+["Risk","How can you reduce an environment risk on a surf trip?","Check the forecast, swim between the flags and change plans if conditions are unsafe",["Swim anywhere you like","Go out in a storm","Ignore the lifeguards"],"Always have a back-up plan or alternative location."],
+// Motivations
+["Motivations","Define the term “intrinsic motivation”.","An internal desire to do something because it gives pleasure or develops a skill",["Doing it for prize money","Doing it to impress others","Doing it because you’re forced to"],"E.g. achieving a personal best."],
+["Motivations","Which is an example of extrinsic motivation?","Prize money",["Achieving a personal best","Enjoying the experience","Developing a skill"],"Other examples: breaking a record, impressing others, making a team."],
+["Motivations","Which are the four categories of motivation?","Competence/mastery, stimulus avoidance, socialisation, cognitive reward",["Money, fame, fitness, fun","Intrinsic, extrinsic, social, safety","Skill, speed, strength, stamina"],"Each explains why people take part in outdoor experiences."],
+["Motivations","Escaping everyday life to be alone in nature is which motivation?","Stimulus avoidance",["Socialisation","Competence/mastery","Cognitive reward"],"It includes the health and wellbeing gained from participation."],
+["Motivations","Getting an adrenalin rush or learning something new is which motivation?","Cognitive reward",["Stimulus avoidance","Socialisation","Competence/mastery"],"It includes seeking challenges outside your comfort zone."],
+["Motivations","Enjoying a feeling of community with others is which motivation?","Socialisation",["Cognitive reward","Stimulus avoidance","Competence/mastery"],"It includes personal and social development."],
+["Motivations","Being the first to accomplish something or setting a record is which motivation?","Competence/mastery",["Socialisation","Stimulus avoidance","Cognitive reward"],"It includes building strength and being competent."],
+["Motivations","Which motivation is defined as the desire to improve skills, test your ability and achieve goals?","Competence/mastery",["Stimulus avoidance","Socialisation","Cognitive reward"],"The reward is feeling capable and successful."],
+["Motivations","Which motivation is defined as wanting to escape the stress, noise and routine of everyday life?","Stimulus avoidance",["Competence/mastery","Socialisation","Cognitive reward"],"Nature offers peace, relaxation and better wellbeing."],
+["Motivations","Which motivation is defined as wanting to spend time with others, make friends and belong to a group?","Socialisation",["Stimulus avoidance","Cognitive reward","Competence/mastery"],"The reward is connection and teamwork."],
+["Motivations","Which motivation is defined as seeking excitement, challenge and new learning?","Cognitive reward",["Socialisation","Stimulus avoidance","Competence/mastery"],"The reward is the thrill and the new knowledge or experience."],
+["Motivations","Case study: Mia hikes the same trail each month to beat her time and sharpen her navigation. Which motivation?","Competence/mastery",["Socialisation","Stimulus avoidance","Cognitive reward"],"The reason is improving her skill and achieving a goal."],
+["Motivations","Case study: Jack goes camping alone to get away from school stress and screens. Which motivation?","Stimulus avoidance",["Socialisation","Competence/mastery","Cognitive reward"],"The reason is escaping everyday pressures to relax."],
+["Motivations","Case study: Priya joins a surf club mainly to make friends and feel part of a group. Which motivation?","Socialisation",["Stimulus avoidance","Competence/mastery","Cognitive reward"],"The reason is connection with other people."],
+["Motivations","Case study: Leo tries white-water rafting for the first time for the thrill of it. Which motivation?","Cognitive reward",["Socialisation","Stimulus avoidance","Competence/mastery"],"The reason is excitement and a new experience."],
+["Motivations","Guess the motivation: a family goes on a weekend bushwalk so they can switch off from work and enjoy the quiet. Which motivation?","Stimulus avoidance",["Competence/mastery","Cognitive reward","Socialisation"],"Clue: they are getting away from everyday life, not chasing a challenge."],
+// Minimal impact
+["Minimal impact","How many Australian Minimal Impact principles are there?","7",["3","5","10"],"They include Leave No Trace, biosecurity and social media responsibility."],
+["Minimal impact","Which Australian Minimal Impact principle involves cleaning gear and reporting pests?","Protecting biosecurity",["Self reliance","Respecting others","Respecting land managers"],"It stops pests and weeds from spreading."],
+["Minimal impact","Which principle involves food, waste, camping and cooking?","Leave No Trace",["Protecting biosecurity","Self reliance","Social media responsibility"],"Take your rubbish out and leave places as you found them."],
+["Minimal impact","Which of these is one of the Australian Minimal Impact principles?","Acknowledge traditional owners",["Feed the wildlife","Light fires anywhere","Collect souvenirs"],"Others: respecting others, respecting land managers."],
+["Minimal impact","Why can animals get sick from human food and waste?","It isn’t their natural diet and can harm them",["It makes them stronger","It helps them hibernate","It has no effect"],"Take all food scraps and rubbish with you."],
+["Minimal impact","Define the term “ecological footprint”.","A measure of the amount of the Earth’s surface needed to provide everything a person uses",["A track left in the mud","The size of a national park","A map of an ecosystem"],"The larger the footprint, the more resources needed."],
+// Indigenous relationships
+["Indigenous relationships","What are the three elements of a relationship with an outdoor environment?","Perceptions, interactions and impacts",["Plans, people and places","Land, water and air","Past, present and future"],"What we think, what we do, and the results."],
+["Indigenous relationships","In a relationship, “perceptions” refers to…","What we think about and how we view the environment",["What we do in the environment","The effects on the environment","The equipment we use"],"Interactions = what we do. Impacts = the results."],
+["Indigenous relationships","Roughly how many different clan groups or nations were there across Australia?","Over 500",["About 50","About 100","About 20"],"Many had distinctive cultures and beliefs."],
+["Indigenous relationships","Which First Nations people are the focus for the You Yangs?","Wadawurrung (Wathaurong)",["Yorta Yorta","Gunditjmara","Palawa"],"Their Country includes Geelong, Ballarat, Bacchus Marsh and the Bellarine Peninsula."],
+["Indigenous relationships","Roughly when did Aboriginal people first arrive in Australia?","About 60,000 years ago",["About 6,000 years ago","About 600 years ago","About 600,000 years ago"],"They arrived by boat from Asia."],
+["Indigenous relationships","Aboriginal societies were described as semi-nomadic. This means they…","Moved over large distances in a seasonal pattern following food",["Never moved","Lived only on islands","Moved randomly"],"Movement followed food supplies through the seasons."],
+["Indigenous relationships","What caused Tasmania to separate from mainland Australia?","Melting polar caps raised sea levels after the last ice age",["A volcano","An earthquake","Human digging"],"It also separated Australia from Asia."],
+// Ecosystems at risk
+["Ecosystems at risk","What makes the Mountain Pygmy Possum unique?","It is Australia’s only hibernating marsupial",["It is the largest possum","It lives in deserts","It lives in the ocean"],"It hibernates for about 7 months of the year."],
+["Ecosystems at risk","Where does the Mountain Pygmy Possum live?","Snowy alpine habitats like Mt Hotham and Mt Buller",["Coastal dunes","Wetlands near Geelong","Desert grasslands"],"It hibernates under boulders beneath thick snow."],
+["Ecosystems at risk","Which is a threat to the Mountain Pygmy Possum?","Feral cats and foxes",["Too much snow","Too many bogong moths","Wildlife corridors"],"Others: habitat destruction and climate change."],
+["Ecosystems at risk","Why does a decline in bogong moths harm the possum?","The moths are their main food source",["The moths eat the possums’ burrows","The moths hibernate with them","The moths spread disease"],"Warmer weather affects the moths’ migration."],
+["Ecosystems at risk","Victoria’s key law for protecting threatened species is the…","Flora and Fauna Guarantee Act 1988",["EPBC Act 1999","National Parks Act 2000","Wildlife Safety Act 1990"],"The EPBC Act is the Commonwealth (federal) law."],
+["Ecosystems at risk","The EPBC Act 1999 is a…","Federal law protecting nationally threatened species",["Victorian law about camping","Local council rule","School policy"],"Development projects must be assessed so they don’t harm habitat."],
+["Ecosystems at risk","What is the “Tunnel of Love” at Mt Hotham?","A wildlife corridor under the road that lets possums cross safely",["A ski lift","A walking track","A camping area"],"It helps possums travel between habitats."],
+["Ecosystems at risk","In an ecosystem fact file, what do “flora” and “fauna” mean?","Flora are plants and fauna are animals",["Flora are animals and fauna are plants","Both mean weather","Both mean soil types"],"A fact file also covers climate conditions and human-induced threats."],
+["Ecosystems at risk","Which is a human-induced threat to an ecosystem?","Clearing land for housing and farming",["A lightning strike","A high tide","Seasonal snow"],"Others: pollution, introduced species, climate change and too many visitors."],
+["Ecosystems at risk","In a threats and management diagram, what is a management strategy?","An action taken to reduce a threat and protect species",["The cause of the damage","A species that is affected","The climate of the area"],"E.g. fox baiting, fencing, revegetation or wildlife corridors."],
+["Ecosystems at risk","The broad-shelled turtle is a freshwater turtle found mainly in which river system?","The Murray–Darling",["The Great Barrier Reef","Alpine snowfields","Sandy ocean beaches"],"It is listed as threatened in Victoria."],
+["Ecosystems at risk","Identify a major threat to broad-shelled turtles.","Foxes digging up and eating their eggs",["Too much river water","Eating too many fish","Hibernating in snow"],"Others: river regulation, habitat loss and road deaths."],
+["Ecosystems at risk","Which is a recovery action for broad-shelled turtles?","Protecting nests with cages and controlling foxes",["Removing river vegetation","Draining wetlands","Building more roads"],"Citizen scientists also record turtle sightings and nests."],
+["Ecosystems at risk","Where does the hooded plover lay its eggs?","In shallow scrapes on the sand of ocean beaches",["High in tree hollows","In underground burrows in the Alps","On floating nests in rivers"],"The eggs are camouflaged, so they are easily trampled."],
+["Ecosystems at risk","What is a major threat to the hooded plover?","People, dogs and vehicles disturbing or trampling nests on the beach",["Too much seaweed","Cold alpine winters","River floods"],"Foxes and ravens also eat their eggs and chicks."],
+["Ecosystems at risk","Which is a recovery action for the hooded plover?","Fencing and signing nesting areas and keeping dogs on leads",["Letting dogs run free","Driving on the dunes","Removing all signs"],"Volunteers monitor nests during breeding season."],
+["Ecosystems at risk","What does the Ramsar Convention protect?","Wetlands of international importance",["Alpine ski resorts","City parks","Farmland only"],"It is an international treaty signed in Ramsar, Iran, in 1971."],
+["Ecosystems at risk","Which local area is part of a Ramsar wetland site?","Swan Bay and Lake Connewarre on the Bellarine Peninsula",["Mt Hotham","The You Yangs summit","Melbourne CBD"],"It is part of the Port Phillip Bay (Western Shoreline) and Bellarine Peninsula Ramsar site."],
+["Ecosystems at risk","In which year was Victoria’s Flora and Fauna Guarantee Act strengthened by a major amendment?","2019",["1971","1999","2010"],"The 2019 amendment made public authorities consider biodiversity in their decisions."],
+["Ecosystems at risk","When rating a law’s effectiveness out of 5, what should your justification be based on?","Evidence, e.g. whether species have recovered and whether the law is enforced",["How long the law’s name is","Whether you have heard of it","How old the law is"],"A law that exists but isn’t enforced may deserve a lower rating."],
+// Indigenous custodianship
+["Indigenous custodianship","Define the term “custodianship”.","The responsibility to care for and protect Country for future generations",["Owning land to sell it","Building fences around land","Visiting a national park"],"Custodians belong to and look after the land rather than owning it."],
+["Indigenous custodianship","Why is custodianship significant to Aboriginal people?","Country is connected to their identity, spirituality, culture and law",["It earns money from tourism","It is only a modern idea","It only matters for farming"],"Knowledge is passed down through stories, songlines and ceremony."],
+["Indigenous custodianship","How do Wadawurrung people perceive Country?","As a living entity and family to be cared for, not owned",["As empty land","As something to sell","As only a source of food"],"If you look after Country, Country looks after you."],
+["Indigenous custodianship","Who is the creator spirit for Wadawurrung and other Kulin nations?","Bunjil, the wedge-tailed eagle",["Waa the crow only","The Rainbow Serpent","The emu"],"Bunjil’s law teaches people not to take more than they need."],
+["Indigenous custodianship","Define the term “cultural (traditional) burning”.","Cool, low-intensity, patchy fires lit at the right time of year",["Large hot fires in summer","Burning rubbish","Fires lit only by lightning"],"It creates a mosaic of burnt and unburnt land."],
+["Indigenous custodianship","Why did Wadawurrung people use fire?","To reduce fuel, encourage new growth and attract animals for hunting",["To clear land for cities","To scare people away","To make the land hotter"],"New grass drew kangaroos, and fire encouraged plants like murnong (yam daisy)."],
+["Indigenous custodianship","How were traditional hunting and gathering practices sustainable?","They followed the seasons and took only what was needed so species could recover",["They hunted every species all year","They only ate introduced animals","They stored food in plastic"],"Moving seasonally let plants and animals regenerate."],
+["Indigenous custodianship","Which is evidence that traditional burning is an effective way to care for Country?","Cool, patchy burns lower fuel loads while protecting the canopy, seeds and animals",["It always creates huge bushfires","It destroys all plant life","It has only been used for 10 years"],"In the debate, use Wadawurrung practices as evidence."],
+["Indigenous custodianship","Which is a counter-argument in the “traditional burning is most effective” debate?","Climate change, farms and housing make safe burning harder, so it may need to be combined with other methods",["Fire has no effect on plants","Aboriginal people never used fire","Burning makes land wetter"],"A strong argument considers both sides."],
+["Indigenous custodianship","What is the correct order of the Indigenous influence timeline?","Traditional management, colonisation impacts, modern recognition of custodianship",["Modern recognition, colonisation impacts, traditional management","Colonisation impacts, traditional management, modern recognition","Modern recognition, traditional management, colonisation impacts"],"Traditional management goes back more than 60,000 years."],
+["Indigenous custodianship","Which was an impact of colonisation on Country?","People were forced off their land and cultural burning was banned",["More cultural burning","More Aboriginal land ownership","Fewer introduced animals"],"Sheep and cattle also ate murnong and compacted the soil."],
+["Indigenous custodianship","Which 1992 High Court decision overturned the idea of terra nullius?","The Mabo decision",["The Ramsar Convention","The EPBC Act","The FFG Act"],"It led to the Native Title Act 1993."],
+["Indigenous custodianship","Which is an example of modern recognition of custodianship?","Traditional Owners working with land managers and running cultural burns",["Banning Aboriginal languages","Removing Acknowledgements of Country","Ignoring Traditional Owners"],"Others: Indigenous rangers, joint management of parks and Acknowledgement of Country."],
+// Logbook
+["Logbook","Define the term “outdoor experience logbook”.","A record of events, experiences, learnings and understanding",["A list of equipment","A bus timetable","A map"],"It’s a tool to document your semester investigation and forms your final assessment."],
+// Exam practice
+["Exam practice","A novice thinks a high-ropes course is extremely dangerous, but harnesses, helmets and trained belayers are in place. Which is correct?","Perceived risk is high but real risk is low",["Perceived risk is low but real risk is high","Both risks are extreme","Absolute risk is zero"],"Perceived risk is an individual’s subjective view. Real risk is what actually exists."],
+["Exam practice","Which control best reduces an environment risk on a bushwalk?","Check the forecast and change the route if a storm is predicted",["Carry a heavier pack","Walk faster","Skip the safety briefing"],"Environment risks come from weather, terrain and water conditions."],
+["Exam practice","A leaking drybag on a kayaking trip is which category of risk?","Equipment risk",["People risk","Environment risk","Absolute risk"],"Equipment risks come from gear that fails or is damaged."],
+["Exam practice","Explain how custodianship differs from ownership.","Custodians care for Country for future generations rather than owning it",["Custodians own land to sell it","Custodians only visit national parks","Custodians have no responsibilities"],"Country is a living entity and family to be cared for, not owned."],
+["Exam practice","Which evidence is strongest when rating the effectiveness of a threatened species law?","Whether species have recovered and whether the law is enforced",["How old the law is","How long the law’s name is","Whether you have heard of it"],"A law that exists but isn’t enforced may deserve a lower rating."],
+["Exam practice","Explain how an EPIRB reduces risk on an outdoor experience.","It sends a distress signal so rescuers can find the group quickly",["It shows the weather forecast","It makes a group walk faster","It removes the need for a first aid kit"],"An EPIRB is a communication device. Never rely on it alone."],
+["Exam practice","Which is an example of a perception in a relationship with an outdoor environment?","Viewing the bush as a peaceful place to escape stress",["Walking along a trail","Trampled vegetation beside a path","Leaving rubbish at a campsite"],"Perceptions = what we think. Interactions = what we do. Impacts = the results."],
+["Exam practice","Which is an example of an impact on an outdoor environment?","Erosion of a trail caused by heavy mountain bike use",["Enjoying the quiet of the bush","Camping beside a river","Believing nature is relaxing"],"Impacts are the results of our interactions."]
+];
+const FOOD=[
+// Design process
+["Design process","Define the term “design brief”.","A written description of the food task, explaining what needs to be designed and the requirements",["A finished recipe","A shopping list","A cleaning checklist"],"It’s written as a short scenario in one clear paragraph."],
+["Design process","What are the 5 W’s in a design brief?","Who, What, When, Where, Why",["Who, What, Which, Wash, Wipe","Weigh, Wash, Whisk, Wait, Wrap","Who, Why, Wok, Water, Warm"],"If a food idea doesn’t fit the 5 W’s, it doesn’t fit the design brief."],
+["Design process","What are constraints?","Limits or restrictions that must be followed, like time, ingredients, equipment or cost",["Factors to take into account like nutrition","Questions asked in the evaluation","The target audience"],"Considerations are important factors like nutrition, food safety, dietary needs and presentation."],
+["Design process","What are considerations?","Important factors to take into account, such as nutrition, hygiene, dietary needs and presentation",["Limits on time and cost","The recipe method","The finished product"],"Constraints are the limits that must be followed."],
+["Design process","What is the target audience?","The group of people the food product is designed for",["The reason the food is made","The kitchen where it’s made","The recipe"],"Purpose is the reason the product is designed and made."],
+["Design process","What are criteria for success questions?","Open-ended questions written from the design brief and answered in the evaluation",["Questions the teacher asks during cooking","A list of ingredients","A cooking timeline"],"They check how well the final product met the design brief."],
+["Design process","What happens in the Investigating stage?","Gathering information by researching ingredients, recipes and existing products",["Cooking the final product","Writing the evaluation","Cleaning the kitchen"],"Research before you design."],
+["Design process","Define the term “product analysis”.","Examining an existing food product’s ingredients, flavour, texture and presentation",["Counting the cost of the kitchen","Tasting only your own food","Weighing the ingredients"],"It gives inspiration and shows what works well."],
+["Design process","What happens in the Generating stage?","Creating a range of food ideas and choosing a preferred option",["Writing the shopping list","Washing up","Serving the food"],"Avoid choosing the first idea without thinking."],
+["Design process","State what SWOT stands for.","Strengths, Weaknesses, Opportunities, Threats",["Safety, Water, Order, Time","Skills, Weights, Options, Tools","Serving, Washing, Organising, Tasting"],"It’s used to compare food ideas."],
+["Design process","What is a decision-making table used for?","Comparing options based on advantages and disadvantages",["Timing the cooking","Writing recipes","Washing equipment"],"It helps you select and justify a preferred option."],
+["Design process","What does “justify” mean?","Explain a choice using clear reasons",["Choose randomly","Copy a recipe","Make a list"],"Justify your final food choice using evidence from comparisons."],
+["Design process","Define the term “production plan (workflow)”.","The order of tasks during cooking",["A list of ingredients","The design brief","The evaluation"],"A cooking timeline shows when each step is completed."],
+["Design process","What is a food order form?","A list of ingredients and quantities needed for the recipe",["A list of tools","A list of safety rules","A menu"],"An equipment list is the list of tools needed."],
+// Cooking techniques
+["Cooking techniques","Baking is which type of cooking method?","Dry",["Moist","Wet","Raw"],"Heat transfer in baking is convection."],
+["Cooking techniques","Poaching is cooking delicate food in liquid…","At a temperature just below a simmer",["At a rolling boil","In hot oil","Over an open flame"],"Poaching keeps the structure of the proteins."],
+["Cooking techniques","Why is steaming a healthier way to cook vegetables?","It keeps water-soluble vitamins in the food",["It adds oil","It burns off fat","It cooks at 220°C"],"Steaming cooks in water vapour with no liquid movement."],
+["Cooking techniques","At what temperature does boiling occur?","100°C",["85°C","150°C","220°C"],"The liquid bubbles vigorously."],
+["Cooking techniques","Frying is classed as a…","Dry cooking method because the main ingredient is oil (fat)",["Moist method","Wet method","No-cook method"],"Types: stir fry, shallow fry and deep fry."],
+["Cooking techniques","Frying uses oil heated to between…","150°C and 220°C",["50°C and 100°C","100°C and 120°C","250°C and 300°C"],"Fast cooking in a hot wok or pan."],
+["Cooking techniques","Which heat transfer is used in grilling?","Radiation",["Convection","Conduction","Evaporation"],"Radiation is heat transferred by electromagnetic waves."],
+["Cooking techniques","Define the term “convection”.","Heat transfer in liquids and air as warmer molecules move to cooler areas",["Heat from electromagnetic waves","Heat passing through direct contact only","Heat from the sun"],"Used in baking, poaching, steaming, boiling and roasting."],
+["Cooking techniques","Stewing is…","A long, slow wet method using the minimum amount of liquid",["A fast dry method","Cooking in an oven without fat","Plunging food briefly into boiling water"],"E.g. goulash and Irish stew."],
+["Cooking techniques","Blanching is…","Partly cooking food by plunging it briefly into boiling water",["Deep frying","Slow cooking in a sauce","Cooking over charcoal"],"Good for broccoli, tomatoes, cabbage and leafy greens."],
+["Cooking techniques","Boiling vs simmering: which has small bubbles just breaking the surface?","Simmering (about 85–95°C)",["Boiling (about 100°C)","Poaching only","Steaming"],"Boiling has large bubbles breaking the surface rapidly."],
+["Cooking techniques","When should you add pasta to the water?","Once the water is at a rolling boil",["Before heating the water","When it’s simmering","After draining it"],"Hot, rapidly boiling water cooks pasta quickly and evenly."],
+["Cooking techniques","What does “al dente” mean?","“To the tooth”: firm when bitten, not mushy",["Fully soft","Cooked in oil","Served cold"],"Al dente pasta holds sauce better."],
+["Cooking techniques","Which helps stop pasta clumping?","Stirring straight away and using plenty of water",["Adding oil to the water","Using a small pot","Turning off the heat"],"Avoid oil in the water because it makes the sauce slide off later."],
+// Science of food
+["Science of food","What is the Maillard reaction?","A reaction between sugar or starch and protein with dry heat, giving a golden brown colour",["Starch thickening a liquid","Mixing oil and water","Adding air to food"],"E.g. baked bread and marinated meat."],
+["Science of food","Define the term “coagulation”.","A permanent change in protein from a liquid to a thick mass, caused by heat or acid",["Sugar browning","Starch breaking into dextrin","Air being whisked in"],"E.g. boiled eggs and quiche."],
+["Science of food","Define the term “dextrinisation”.","Starch broken down into dextrin by dry heat, turning golden brown",["Starch absorbing liquid to thicken","Sugar decomposing at 190°C","Mixing two liquids"],"E.g. toast."],
+["Science of food","Define the term “gelatinisation”.","Starch granules absorbing liquid with heat and thickening it into a gel",["Sugar browning","Protein changing shape","Air being added"],"E.g. custard and lemon tart."],
+["Science of food","Define the term “emulsification”.","Mixing two liquids that don’t normally combine, like oil and water",["Browning of sugar","Thickening with starch","Adding air"],"E.g. mayonnaise and vinaigrette."],
+["Science of food","Caramelisation happens when…","Sugar decomposes at high temperatures (about 190°C) with dry heat",["Protein sets","Starch absorbs water","Yeast makes gas"],"E.g. toffee."],
+["Science of food","Define the term “denaturation”.","A permanent structural change of protein molecules from heat, mechanical action or acid",["Sugar turning brown","Starch thickening","Oil mixing with water"],"E.g. poached eggs and beaten egg whites."],
+["Science of food","Define the term “aeration”.","Incorporating air to increase volume and create a light texture",["Mixing oil and water","Browning sugar","Setting protein"],"Biological (yeast), chemical (bicarb soda) or mechanical (whisking)."],
+["Science of food","Whisking egg whites is which type of aeration?","Mechanical",["Biological","Chemical","Thermal"],"Bread rising is biological. Sponge cake is chemical."],
+// Food safety
+["Food safety","What is the temperature danger zone?","5°C to 60°C",["0°C to 5°C","60°C to 100°C","-18°C to 5°C"],"Bacteria grow rapidly in this range."],
+["Food safety","Cold food should be stored…","Below 5°C",["Below 10°C","Above 5°C","At room temperature"],"Hot food should be held above 60°C."],
+["Food safety","What should the freezer temperature be?","-18°C",["0°C","-5°C","5°C"],"It keeps food safely frozen."],
+["Food safety","Define the term “cross-contamination”.","The transfer of harmful microorganisms from one food, surface or object to another",["Cooking food twice","Adding too much salt","Freezing food"],"Keep raw and ready-to-eat foods separate."],
+["Food safety","Food can become contaminated by…","Bacteria, viruses, chemicals and foreign objects",["Only bacteria","Only chemicals","Only insects"],"Most food poisoning can be prevented by correct procedures."],
+["Food safety","Which is a common symptom of food poisoning?","Vomiting",["A sore knee","A blocked nose only","Sneezing"],"Others: nausea, diarrhoea, stomach cramps and fever."],
+["Food safety","How many questions are in the DoFoodSafely final quiz, and what score is needed?","30 questions and 100%",["10 questions and 50%","20 questions and 80%","50 questions and 90%"],"Email your certificate to your teacher."],
+["Food safety","How many modules are in the DoFoodSafely course?","7",["3","5","10"],"E.g. personal hygiene, contamination, cleaning and sanitising, allergens."],
+// Migration to Australia
+["Migration to Australia","First Nations Peoples arrived in Australia roughly…","65,000+ years ago",["6,500 years ago","1,788 years ago","200 years ago"],"They established the world’s oldest continuous living culture."],
+["Migration to Australia","Which is a traditional First Nations food?","Kangaroo, emu, yams and bush berries",["Beef and lamb","Wheat and potatoes","Rice and noodles"],"Diets varied by region: coastal seafood, desert seeds, forest fruits and nuts."],
+["Migration to Australia","What did the First Fleet in 1788 establish?","A penal colony",["A gold mine","A trading port only","A national park"],"It introduced British food traditions."],
+["Migration to Australia","Which foods did British colonisation introduce?","Wheat, potatoes, cabbage, beef, lamb and dairy",["Kangaroo and emu","Rice and soy sauce","Yams and bush berries"],"Baking, boiling, roasting and preserving were common techniques."],
+["Migration to Australia","How did British colonisation affect First Nations food systems?","Land was cleared, native foods reduced and access to Country was lost",["They had more access to land","Nothing changed","Native foods increased"],"Traditional practices like firestick farming were disrupted."],
+["Migration to Australia","Why did Chinese migrants come to Australia in the 1850s?","The gold rush",["To farm sheep","As convicts","To start a penal colony"],"They introduced rice, noodles, soy sauce, ginger and tea."],
+["Migration to Australia","What did Chinese migrants establish near goldfields and towns?","Market gardens growing fresh vegetables",["Sheep stations","Wheat farms","Dairies"],"This improved access to fresh produce in remote areas."],
+// Exam practice
+["Exam practice","Justify why steaming vegetables is a healthier choice than boiling them.","It keeps water-soluble vitamins in the food",["It adds oil","It cooks at a higher temperature","It browns the food"],"In boiling, vitamins can leach into the water."],
+["Exam practice","Explain what happens during gelatinisation when a sauce is thickened with cornflour.","Starch granules absorb liquid, swell with heat and thicken the sauce",["Protein changes shape and sets","Sugar breaks down and browns","Air is added to the mixture"],"Gelatinisation = starch absorbing liquid with heat."],
+["Exam practice","Which scientific change causes toast to turn golden brown?","Dextrinisation",["Gelatinisation","Coagulation","Emulsification"],"Dry heat breaks starch down into dextrin."],
+["Exam practice","Cooked chicken is left on the bench for 3 hours at 22°C. Explain why this is unsafe.","It is in the temperature danger zone (5°C to 60°C), where bacteria multiply rapidly",["Bacteria cannot grow at 22°C","It is above 60°C so it is too hot","It is below 5°C so it is too cold"],"Cold food should be below 5°C and hot food above 60°C."],
+["Exam practice","Which action best prevents cross-contamination?","Using separate boards and utensils for raw and ready-to-eat foods",["Washing raw chicken in the sink","Using one board for everything","Storing raw meat above cooked food"],"Keep raw and ready-to-eat foods separate."],
+["Exam practice","“The product must be finished in 90 minutes and cost under $10.” Identify what this is in a design brief.","A constraint",["A consideration","The target audience","A criterion for success"],"Constraints are limits that must be followed, such as time, ingredients, equipment or cost."],
+["Exam practice","Identify the best way to evaluate whether a food product was successful.","Answer the criteria for success questions using evidence from tasting and feedback",["Say it tasted nice","List the ingredients used","Copy the recipe"],"Evaluation checks how well the final product met the design brief."],
+["Exam practice","Explain the impact of Chinese migrants on food in Australia during the 1850s gold rush.","They set up market gardens that improved access to fresh vegetables near goldfields",["They introduced wheat and potatoes","They established a penal colony","They introduced firestick farming"],"They also introduced rice, noodles, soy sauce, ginger and tea."]
+];
+const GENERAL=[
+// Percentages, ratios & interest
+["Percentages, ratios & interest","To change a percentage into a decimal you…","Divide by 100",["Multiply by 100","Divide by 10","Multiply by 10"],"E.g. 35% = 0.35."],
+["Percentages, ratios & interest","Simplify the ratio 24 : 36","2 : 3",["3 : 4","4 : 6","6 : 9"],"Divide both by 12."],
+["Percentages, ratios & interest","Write 0.36 as a percentage and a simplest fraction","36% and 9/25",["3.6% and 36/100","36% and 18/25","0.36% and 9/25"],"36/100 simplifies to 9/25."],
+["Percentages, ratios & interest","A bike bought for $480 is sold for $600. What is the profit?","$120",["$100","$150","$180"],"600 − 480 = 120."],
+["Percentages, ratios & interest","What is 20% of 800 g of flour?","160 g",["150 g","180 g","200 g"],"0.2 × 800 = 160."],
+["Percentages, ratios & interest","Shoes originally $200 are discounted by 15%. What is the new price?","$170",["$160","$150","$175"],"200 × 0.85 = 170."],
+["Percentages, ratios & interest","Simple interest on $2,400 at 6% p.a. for 4 years is…","$576",["$600","$720","$800"],"I = PRT = 2,400 × 0.06 × 4 = 576."],
+["Percentages, ratios & interest","$1,500 invested at 8% compounded annually for 2 years is worth…","$1,749.60",["$1,620","$1,800","$1,814.40"],"1,500 × 1.08² = 1,749.60."],
+["Percentages, ratios & interest","A bag bought for $80 is sold for $100. What is the profit percentage?","25%",["15%","20%","30%"],"20 ÷ 80 × 100 = 25%."],
+["Percentages, ratios & interest","A painting increased in value by 20% and is now worth $360. What was its original value?","$300",["$280","$320","$340"],"120% = 360, so 360 ÷ 1.2 = 300."],
+["Percentages, ratios & interest","$180 is shared in the ratio 2 : 3 : 4. How much does the person with 4 parts get?","$80",["$60","$40","$100"],"180 ÷ 9 = 20, then 4 × 20 = 80."],
+["Percentages, ratios & interest","Which is the best value: 200 g for $5, 350 g for $7.50, 250 g for $6.50, 150 g for $4?","350 g for $7.50",["200 g for $5","250 g for $6.50","150 g for $4"],"It’s the cheapest per gram."],
+["Percentages, ratios & interest","Sophie deposits $4,200 at 5% p.a. simple interest and earns $525. For how many years?","2.5 years",["2 years","3 years","3.5 years"],"One year is $210, and 525 ÷ 210 = 2.5."],
+["Percentages, ratios & interest","A $2,500 laptop depreciates 20% per year. What is it worth after 3 years?","$1,280",["$1,000","$1,250","$1,300.50"],"2,500 × 0.8³ = 1,280."],
+["Percentages, ratios & interest","Tom earns $15/hour. He works 10 normal hours and 5 hours at time and a half. His total is…","$262.50",["$225","$237.50","$270"],"150 + 5 × 22.50 = 262.50."],
+["Percentages, ratios & interest","Liam earns $700 plus 0.05% commission on $3,600 of sales. What is his total pay?","$701.80",["$718","$700","$1.80"],"0.0005 × 3,600 = 1.80."],
+["Percentages, ratios & interest","Sophia earns $22/hour weekdays, time and a half Saturday, double time Sunday. How much for 3 hours on Saturday?","$99",["$66","$132","$110"],"3 × 22 × 1.5 = 99."],
+["Percentages, ratios & interest","Mr Parker wants $450 simple interest over 4 years at 5% p.a. How much should he invest?","$2,250",["$9,000","$900","$22,500"],"450 = P × 0.05 × 4, so P = 2,250."],
+["Percentages, ratios & interest","$10,000 for 5 years at 6%: simple interest gives $13,000. Compound (annually) gives…","$13,382.26",["$13,000","$13,600","$16,000"],"10,000 × 1.06⁵ = 13,382.26. Compound is better."],
+["Percentages, ratios & interest", "Simplify the ratio 45 : 60.", "3 : 4", ["9 : 12", "4 : 3", "15 : 20"], "Divide both by 15."],
+["Percentages, ratios & interest", "Write the ratio 1.5 m : 50 cm in simplest form.", "3 : 1", ["1.5 : 50", "30 : 1", "1 : 3"], "Convert to the same unit: 150 cm : 50 cm = 3 : 1."],
+["Percentages, ratios & interest", "A cordial is mixed 1 part cordial to 4 parts water. How much cordial is in 750 mL of the drink?", "150 mL", ["187.5 mL", "250 mL", "600 mL"], "There are 5 parts and 750 ÷ 5 = 150."],
+["Percentages, ratios & interest", "The ratio of boys to girls is 3 : 5. There are 24 boys. How many girls are there?", "40", ["15", "32", "64"], "24 ÷ 3 = 8 per part, then 5 × 8 = 40."],
+["Percentages, ratios & interest", "Convert 3/8 to a decimal and a percentage.", "0.375 and 37.5%", ["0.3 and 30%", "0.375 and 3.75%", "0.83 and 83%"], "3 ÷ 8 = 0.375, then × 100."],
+["Percentages, ratios & interest", "Convert 0.07 to a fraction and a percentage.", "7/100 and 7%", ["7/10 and 70%", "1/7 and 7%", "7/100 and 0.7%"], "0.07 = 7/100 = 7%."],
+["Percentages, ratios & interest", "Express 18 out of 24 as a percentage.", "75%", ["72%", "80%", "133%"], "18 ÷ 24 × 100 = 75."],
+["Percentages, ratios & interest", "Find 35% of $240.", "$84", ["$72", "$70", "$8.40"], "0.35 × 240 = 84."],
+["Percentages, ratios & interest", "A car travels 150 km in 2.5 hours. Find its average speed.", "60 km/h", ["375 km/h", "75 km/h", "0.017 km/h"], "Speed = distance ÷ time."],
+["Percentages, ratios & interest", "Convert 90 km/h to m/s.", "25 m/s", ["324 m/s", "15 m/s", "90 m/s"], "Divide by 3.6."],
+["Percentages, ratios & interest", "Which is the best buy: 500 g for $3.50, 750 g for $4.80 or 1 kg for $6.90?", "750 g for $4.80", ["500 g for $3.50", "1 kg for $6.90", "They are all the same"], "Per 100 g: $0.70, $0.64 and $0.69."],
+["Percentages, ratios & interest", "A price rises from $40 to $46. Find the percentage increase.", "15%", ["6%", "13%", "86%"], "6 ÷ 40 × 100 = 15."],
+["Percentages, ratios & interest", "A price falls from $250 to $200. Find the percentage decrease.", "20%", ["25%", "50%", "80%"], "50 ÷ 250 × 100 = 20."],
+["Percentages, ratios & interest", "Increase $80 by 12.5%.", "$90", ["$92.50", "$100", "$82.50"], "80 × 1.125 = 90."],
+["Percentages, ratios & interest", "A shop buys a jacket for $60 and sells it for $96. Find the profit as a percentage of the cost price.", "60%", ["37.5%", "36%", "160%"], "Profit is $36, and 36 ÷ 60 × 100 = 60."],
+["Percentages, ratios & interest", "Find the sale price of a $64 item after a 25% discount.", "$48", ["$16", "$39", "$80"], "64 × 0.75 = 48."],
+["Percentages, ratios & interest", "After a 20% discount an item costs $60. What was the original price?", "$75", ["$72", "$80", "$48"], "$60 is 80% of the original, so 60 ÷ 0.8 = 75."],
+["Percentages, ratios & interest", "A car worth $20,000 depreciates by 15% p.a. What is it worth after 2 years?", "$14,450", ["$14,000", "$14,500", "$6,000"], "20,000 × 0.85² = 14,450."],
+["Percentages, ratios & interest", "In compound interest, interest is calculated on…", "The original amount plus interest already earned", ["Only the original amount", "Only the interest", "Only the final amount"], "This is why compound interest grows faster than simple interest."],
+["Percentages, ratios & interest", "$5,000 is invested at 4% p.a. compounded annually for 3 years. What is it worth?", "$5,624.32", ["$5,600.00", "$5,200.00", "$6,000.00"], "5,000 × 1.04³ = 5,624.32."],
+// Tax & income
+["Tax & income","State what PAYG stands for.","Pay As You Go",["Pay After Year-end Gross","Personal Annual Yearly Gain","Pay And Yield Growth"],"Employees pay tax as they earn."],
+["Tax & income","The Australian financial year runs from…","1 July to 30 June",["1 January to 31 December","1 September to 31 August","1 April to 31 March"],"A tax return is completed at the end of it."],
+["Tax & income","How is taxable income calculated?","Gross income − allowable tax deductions",["Gross income + deductions","Net income − tax","Gross income ÷ deductions"],"Deductions include work-related expenses and charity donations."],
+["Tax & income","What is the tax-free threshold in the tax table?","$18,200",["$45,000","$200,000","$0"],"Income up to $18,200 has nil tax."],
+["Tax & income","What is the Medicare levy?","2% of taxable income",["10% of income","19% of income","$200 flat"],"It helps share the cost of running the medical system."],
+["Tax & income","How is net income calculated?","Taxable income − tax payable",["Gross income − deductions","Taxable income + tax payable","Gross income × 2%"],"Net income is what you keep after tax."],
+["Tax & income","If you have paid too much tax during the year you receive a…","Tax refund",["Tax liability","Medicare levy","Deduction"],"If you paid too little, the ATO sends a letter for the tax liability."],
+["Tax & income","Which is an allowable tax deduction?","Work-related expenses such as tools or uniform",["A holiday","Groceries","Rent"],"Charity donations also count."],
+["Tax & income","Richard earned $54,600 and has $375 of receipts. What is his taxable income?","$54,225",["$54,975","$54,600","$375"],"54,600 − 375 = 54,225."],
+["Tax & income","Richard’s taxable income is $54,225. Using $4,288 plus 30c per $1 over $45,000, his tax payable is…","$7,055.50",["$7,859.50","$2,767.50","$4,288"],"4,288 + 0.30 × 9,225 = 7,055.50."],
+["Tax & income","What is Richard’s Medicare levy (2% of $54,225)?","$1,084.50",["$542.25","$1,085.40","$2,169"],"0.02 × 54,225 = 1,084.50."],
+["Tax & income","Richard’s total tax (tax payable plus Medicare levy) is $8,140 and his employer sent $7,797. What happens?","He owes $343 (tax liability)",["He gets a $343 refund","He owes $7,797","Nothing"],"7,055.50 + 1,084.50 = 8,140, and 8,140 − 7,797 = 343, so he paid too little."],
+["Tax & income","Bella earned $130,000 with $1,800 of deductions. What is her taxable income?","$128,200",["$131,800","$130,000","$1,800"],"130,000 − 1,800 = 128,200."],
+["Tax & income","Bella’s taxable income is $128,200. What is her tax payable (not including Medicare)?","$29,248",["$38,460","$24,960","$31,812"],"4,288 + 0.30 × 83,200 = 29,248."],
+["Tax & income","Bella’s total tax (tax payable plus Medicare levy) is $31,812 and her employer sent $35,000. What does she get?","A refund of $3,188",["A bill of $3,188","A refund of $35,000","Nothing"],"29,248 + 2,564 = 31,812, and 35,000 − 31,812 = 3,188."],
+["Tax & income","Clark’s taxable income is $111,900. What is his tax payable?","$24,358",["$20,070","$33,570","$31,288"],"4,288 + 0.30 × 66,900 = 24,358."],
+["Tax & income","Tax on $45,000 using “16c for each $1 over $18,200” is…","$4,288",["$7,200","$5,092","$2,700"],"0.16 × 26,800 = 4,288."],
+["Tax & income","Tax on $48,000 using “$4,288 plus 30c for each $1 over $45,000” is…","$5,188",["$4,288","$14,400","$5,092"],"4,288 + 0.30 × 3,000 = 5,188."],
+["Tax & income", "Sophie earns $52,000 a year. How much does she earn per week (52 weeks)?", "$1,000", ["$4,333", "$2,000", "$100"], "52,000 ÷ 52 = 1,000."],
+["Tax & income", "How does the PAYG system collect income tax?", "The employer withholds tax from each pay and sends it to the ATO", ["The employee pays all tax once a year", "Only employers pay tax", "Tax is paid when you buy goods"], "PAYG = Pay As You Go."],
+["Tax & income", "Find the tax on a taxable income of $30,000 using “16c for each $1 over $18,200”.", "$1,888", ["$4,800", "$11,800", "$1,180"], "(30,000 − 18,200) × 0.16 = 11,800 × 0.16 = 1,888."],
+// Statistics
+["Statistics","What is a population in statistics?","A complete group with at least one characteristic in common",["A subset of a group","A tool for collecting data","A tendency in results"],"A sample is a selection or subset of the population."],
+["Statistics","Define the term “sample”.","A selection or subset of the population",["The complete group","A graph","A type of bias"],"A survey of the entire population is called a census."],
+["Statistics","A survey of the entire population is called a…","Census",["Sample","Bias","Stratified survey"],"A survey is an investigation to collect information."],
+["Statistics","Define the term “bias”.","A tendency that causes a difference between survey results and the true facts",["A small sample","The middle of the data","A type of graph"],"Bias makes results unreliable."],
+["Statistics","Data that can be sorted into groups or categories is…","Categorical",["Numerical","Discrete","Continuous"],"Numerical data is expressed as numbers."],
+["Statistics","Categories with no order, like colours, are…","Categorical nominal",["Categorical ordinal","Numerical discrete","Numerical continuous"],"Ordinal categories can be ordered, like low, medium, high."],
+["Statistics","Classify: the mass of each shell in a collection","Numerical continuous",["Numerical discrete","Categorical nominal","Categorical ordinal"],"It can take any value in a range."],
+["Statistics","Classify: ratings of a TV program as good, satisfactory or poor","Categorical ordinal",["Categorical nominal","Numerical discrete","Numerical continuous"],"The categories have a clear order."],
+["Statistics","Classify: the number of computers in a household","Numerical discrete",["Numerical continuous","Categorical nominal","Categorical ordinal"],"Discrete data takes a limited number of values."],
+["Statistics","Classify: the time taken to complete a task","Numerical continuous",["Numerical discrete","Categorical ordinal","Categorical nominal"],"Time can be any value in a range."],
+["Statistics","Classify: vest size (large, medium or small)","Categorical ordinal",["Categorical nominal","Numerical discrete","Numerical continuous"],"Sizes can be ordered."],
+["Statistics","Every individual has an equal chance of being chosen. This is…","Simple random sampling",["Systematic sampling","Stratified sampling","Census"],"E.g. a random number generator."],
+["Statistics","Individuals are selected at regular intervals (e.g. every 5th car). This is…","Systematic sampling",["Simple random sampling","Stratified sampling","Bias"],"E.g. every 20th car on a highway."],
+["Statistics","The population is divided into subgroups and individuals surveyed within each. This is…","Stratified sampling",["Systematic sampling","Simple random sampling","A census"],"E.g. dogs grouped by breed, athletes grouped by sport."],
+["Statistics","Which is a sampling error?","The sample is too small or doesn’t represent the population",["Using a random number generator","Surveying everyone","Recording accurate measurements"],"Also: poor measurements or an inappropriate method."],
+["Statistics","People surveyed on the street at 7 p.m. about how often they eat out will probably show…","Bias, as they’re more likely to go out more often",["No bias","Perfectly random results","A census"],"Surveying only teammates about the World Cup is also biased."],
+["Statistics","A histogram with a long tail pointing to the right is…","Positively skewed",["Negatively skewed","Symmetric","Uniform"],"Negatively skewed has a long tail pointing left."],
+["Statistics","A symmetric distribution…","Forms a mirror image of itself when folded in the middle",["Has a long tail to the right","Has a long tail to the left","Has no centre"],"Centre and spread can still be compared."],
+["Statistics","Two distributions that have the same shape but are shifted to the right differ in…","Centre",["Spread","Shape","Size of sample"],"Differing spread means one is more variable."],
+["Statistics","In a stem plot, the number 45 is split into…","Stem 4 and leaf 5",["Stem 5 and leaf 4","Stem 45 and leaf 0","Stem 0 and leaf 45"],"The stem is the leading digit(s), the leaf is the last digit."],
+["Statistics","In a stem plot with key 1|5 = 15, what does 3|7 mean?","37",["3.7","73","10"],"Stem 3 and leaf 7 gives 37."],
+["Statistics","A dot plot is best used for…","Small data sets (n < 30) of discrete data",["Large data sets (n > 30)","Categorical data only","Data sets of 50 or more"],"Stem plots suit small sets (n < 50). Histograms suit large sets."],
+["Statistics","The first step in making a stem plot is…","Re-arrange the data into ascending order",["Draw the key","Attach the leaves","Draw a histogram"],"Then identify stems, attach leaves, and add a key."],
+["Algebra: expressions & equations", "Simplify 5a + 3b − 2a + b", "3a + 4b", ["3a + 2b", "7a + 4b", "3ab + 4b"], "Collect like terms: 5a − 2a = 3a and 3b + b = 4b."],
+["Algebra: expressions & equations", "Simplify 4x × 3y", "12xy", ["7xy", "12x + y", "43xy"], "Multiply the numbers (4 × 3 = 12) and write the pronumerals together."],
+["Algebra: expressions & equations", "Simplify 18ab ÷ 6a", "3b", ["3a", "12b", "3ab"], "18 ÷ 6 = 3 and the a’s cancel."],
+["Algebra: expressions & equations", "Expand 4(2x − 3)", "8x − 12", ["8x − 3", "2x − 12", "8x + 12"], "Multiply every term inside the bracket by 4."],
+["Algebra: expressions & equations", "Expand and simplify 3(x + 2) + 2(x − 4)", "5x − 2", ["5x + 14", "5x − 14", "6x − 2"], "3x + 6 + 2x − 8 = 5x − 2."],
+["Algebra: expressions & equations", "Expand −2(a − 6)", "−2a + 12", ["−2a − 12", "2a − 12", "−2a − 6"], "−2 × −6 = +12, so the sign changes on the second term."],
+["Algebra: expressions & equations", "Solve 3x + 5 = 20", "x = 5", ["x = 25/3", "x = 15", "x = 8"], "Subtract 5 to get 3x = 15, then divide by 3."],
+["Algebra: expressions & equations", "Solve x/4 − 3 = 2", "x = 20", ["x = 5", "x = −4", "x = 4"], "Add 3 to get x/4 = 5, then multiply by 4."],
+["Algebra: expressions & equations", "Solve 2(x + 3) = 18", "x = 6", ["x = 9", "x = 7.5", "x = 12"], "Expand: 2x + 6 = 18, so 2x = 12 and x = 6."],
+["Algebra: expressions & equations", "Solve 5x − 4 = 2x + 11", "x = 5", ["x = 3", "x = 15/7", "x = 1"], "Subtract 2x from both sides: 3x − 4 = 11, so 3x = 15."],
+["Algebra: expressions & equations", "Solve 7 − 2x = 1", "x = 3", ["x = −3", "x = 4", "x = 1"], "Subtract 7 to get −2x = −6, then divide by −2."],
+["Algebra: expressions & equations", "Use the formula A = ½bh to find A when b = 10 and h = 6", "30", ["60", "16", "15"], "A = ½ × 10 × 6 = 30."],
+["Algebra: expressions & equations", "Use v = u + at to find v when u = 5, a = 3 and t = 4", "17", ["32", "60", "12"], "v = 5 + 3 × 4 = 5 + 12 = 17."],
+["Algebra: expressions & equations", "Use C = 2πr to find C (1 dp) when r = 7", "44.0", ["22.0", "154.0", "14.0"], "C = 2 × π × 7 = 43.98…, which rounds to 44.0."],
+["Algebra: expressions & equations", "A taxi charges $4 plus $2.50 per km. Which expression gives the cost of a d km trip?", "4 + 2.5d", ["6.5d", "4d + 2.5", "(4 + 2.5)d"], "The fixed fee is added once. The $2.50 is multiplied by the km."],
+["Algebra: expressions & equations", "Which pair are like terms?", "5xy and −2yx", ["3x² and 3x", "4a and 4b", "2ab and 2a"], "Like terms have exactly the same pronumerals and powers."],
+["Linear graphs & gradient", "In which quadrant of the Cartesian plane does the point (3, −2) lie?", "Quadrant 4", ["Quadrant 1", "Quadrant 2", "Quadrant 3"], "Positive x and negative y is the bottom right quadrant."],
+["Linear graphs & gradient", "Which point lies on the y-axis?", "(0, −3)", ["(−3, 0)", "(3, 3)", "(−3, −3)"], "Points on the y-axis have an x-coordinate of 0."],
+["Linear graphs & gradient", "State the y-intercept of y = 2x − 6.", "(0, −6)", ["(0, 6)", "(−6, 0)", "(3, 0)"], "Let x = 0, so y = −6."],
+["Linear graphs & gradient", "State the x-intercept of y = 2x − 6.", "(3, 0)", ["(−3, 0)", "(0, 3)", "(6, 0)"], "Let y = 0: 2x − 6 = 0, so x = 3."],
+["Linear graphs & gradient", "Find the x-intercept of 3x + 2y = 12.", "(4, 0)", ["(6, 0)", "(0, 4)", "(12, 0)"], "Let y = 0: 3x = 12, so x = 4."],
+["Linear graphs & gradient", "Find the gradient of the line through (1, 2) and (4, 11).", "3", ["1/3", "9", "−3"], "Gradient = rise ÷ run = (11 − 2) ÷ (4 − 1) = 9 ÷ 3."],
+["Linear graphs & gradient", "Find the gradient of the line through (2, 7) and (6, 3).", "−1", ["1", "−4", "4"], "(3 − 7) ÷ (6 − 2) = −4 ÷ 4 = −1. The line falls."],
+["Linear graphs & gradient", "What is the gradient of the horizontal line y = 5?", "0", ["Undefined", "5", "1"], "A horizontal line has no rise, so the gradient is 0."],
+["Linear graphs & gradient", "State the gradient and y-intercept of y = −3x + 4.", "Gradient −3, y-intercept 4", ["Gradient 4, y-intercept −3", "Gradient 3, y-intercept 4", "Gradient −3, y-intercept −4"], "In y = mx + c, m is the gradient and c is the y-intercept."],
+["Linear graphs & gradient", "Which is the equation of a line with gradient 2 and y-intercept −5?", "y = 2x − 5", ["y = −5x + 2", "y = 2x + 5", "y = x − 5"], "Substitute m = 2 and c = −5 into y = mx + c."],
+["Linear graphs & gradient", "Find the equation of the line with gradient 3 passing through (1, 5).", "y = 3x + 2", ["y = 3x + 5", "y = 3x − 2", "y = 2x + 3"], "5 = 3(1) + c, so c = 2."],
+["Linear graphs & gradient", "Find the equation of the line through (0, 1) and (2, 7).", "y = 3x + 1", ["y = 2x + 1", "y = 3x + 7", "y = 3x − 1"], "Gradient = (7 − 1) ÷ 2 = 3 and the y-intercept is 1."],
+["Linear graphs & gradient", "A table has x = 0, 1, 2, 3 and y = 4, 7, 10, 13. Find the rule.", "y = 3x + 4", ["y = 4x + 3", "y = 3x + 7", "y = 7x + 4"], "y goes up by 3 each time (gradient) and y = 4 when x = 0."],
+["Linear graphs & gradient", "Use y = 2x − 1 to find y when x = −3.", "−7", ["−5", "5", "−3"], "y = 2(−3) − 1 = −6 − 1 = −7."],
+["Linear graphs & gradient", "A plumber charges a $60 call-out fee plus $45 per hour. Which rule gives the cost C for h hours?", "C = 45h + 60", ["C = 60h + 45", "C = 105h", "C = 45h − 60"], "The rate per hour is the gradient and the fixed fee is the intercept."],
+["Linear graphs & gradient", "Using C = 45h + 60, how many hours were worked if the bill is $240?", "4 hours", ["5.3 hours", "3 hours", "6.7 hours"], "240 = 45h + 60, so 45h = 180 and h = 4."],
+["Linear graphs & gradient", "In the model C = 45h + 60, what does the 60 represent?", "The fixed (starting) cost", ["The cost per hour", "The cost after 1 hour", "The number of hours"], "It is the y-intercept: the cost when h = 0."],
+["Linear graphs & gradient", "In a linear model, what does the gradient represent?", "The rate of change", ["The starting value", "The total amount", "The x-intercept"], "E.g. dollars per hour or km per hour."],
+["Linear graphs & gradient", "Which line is parallel to y = 2x + 3?", "y = 2x − 7", ["y = 3x + 2", "y = −2x + 3", "y = x/2 + 3"], "Parallel lines have the same gradient."],
+["Linear graphs & gradient", "Which point lies on the line y = 3x − 2?", "(2, 4)", ["(2, 5)", "(1, 3)", "(0, 2)"], "Substitute x = 2: y = 3(2) − 2 = 4."],
+["Pythagoras & trigonometry", "A right-angled triangle has shorter sides of 6 cm and 8 cm. Find the hypotenuse.", "10 cm", ["14 cm", "100 cm", "7 cm"], "c² = 6² + 8² = 100, so c = 10."],
+["Pythagoras & trigonometry", "A right-angled triangle has a hypotenuse of 13 cm and one shorter side of 5 cm. Find the other side.", "12 cm", ["8 cm", "18 cm", "144 cm"], "a² = 13² − 5² = 144, so a = 12. Subtract to find a shorter side."],
+["Pythagoras & trigonometry", "A right-angled triangle has shorter sides of 5 cm and 9 cm. Find the hypotenuse (1 dp).", "10.3 cm", ["14.0 cm", "106.0 cm", "7.5 cm"], "c² = 25 + 81 = 106, so c = 10.29… ≈ 10.3."],
+["Pythagoras & trigonometry", "A right-angled triangle has a hypotenuse of 15 cm and one shorter side of 9 cm. Find the other side.", "12 cm", ["6 cm", "17.5 cm", "144 cm"], "a² = 225 − 81 = 144, so a = 12."],
+["Pythagoras & trigonometry", "Which set of side lengths is a Pythagorean triple?", "5, 12, 13", ["4, 5, 6", "6, 7, 8", "7, 8, 9"], "5² + 12² = 25 + 144 = 169 = 13²."],
+["Pythagoras & trigonometry", "A triangle has sides 7 cm, 24 cm and 25 cm. Is it right-angled?", "Yes, because 7² + 24² = 25²", ["Yes, because 7 + 24 > 25", "No, because 7² + 24² ≠ 25²", "No, because 7 + 24 > 25"], "49 + 576 = 625 = 25². The converse of Pythagoras’ theorem shows it is right-angled."],
+["Pythagoras & trigonometry", "A 5 m ladder leans against a wall with its foot 3 m from the wall. How high up the wall does it reach?", "4 m", ["8 m", "2 m", "5.8 m"], "h² = 5² − 3² = 16, so h = 4."],
+["Pythagoras & trigonometry", "Find the length of the diagonal of a rectangle that is 12 cm by 5 cm.", "13 cm", ["17 cm", "7 cm", "60 cm"], "d² = 12² + 5² = 169, so d = 13."],
+["Pythagoras & trigonometry", "In a right-angled triangle, sin θ equals…", "opposite ÷ hypotenuse", ["adjacent ÷ hypotenuse", "opposite ÷ adjacent", "hypotenuse ÷ opposite"], "SOH: Sine = Opposite ÷ Hypotenuse."],
+["Pythagoras & trigonometry", "In a right-angled triangle, cos θ equals…", "adjacent ÷ hypotenuse", ["opposite ÷ hypotenuse", "opposite ÷ adjacent", "adjacent ÷ opposite"], "CAH: Cosine = Adjacent ÷ Hypotenuse."],
+["Pythagoras & trigonometry", "In a right-angled triangle, tan θ equals…", "opposite ÷ adjacent", ["opposite ÷ hypotenuse", "adjacent ÷ hypotenuse", "adjacent ÷ opposite"], "TOA: Tangent = Opposite ÷ Adjacent."],
+["Pythagoras & trigonometry", "A right-angled triangle has a 30° angle and a hypotenuse of 10 cm. Find the side opposite the 30° angle.", "5 cm", ["8.7 cm", "20 cm", "17.3 cm"], "sin 30° = x ÷ 10, so x = 10 × 0.5 = 5."],
+["Pythagoras & trigonometry", "A right-angled triangle has a 60° angle with an adjacent side of 8 cm. Find the hypotenuse.", "16 cm", ["4 cm", "13.9 cm", "9.2 cm"], "cos 60° = 8 ÷ h, so h = 8 ÷ 0.5 = 16."],
+["Pythagoras & trigonometry", "Find x (1 dp) if tan 35° = x ÷ 12.", "8.4", ["17.1", "6.9", "9.8"], "x = 12 × tan 35° = 8.40…"],
+["Pythagoras & trigonometry", "The side opposite angle θ is 3 cm and the adjacent side is 4 cm. Find θ (1 dp).", "36.9°", ["53.1°", "48.6°", "0.75°"], "tan θ = 3 ÷ 4 = 0.75, so θ = tan⁻¹(0.75) = 36.9°."],
+["Pythagoras & trigonometry", "The side opposite angle θ is 4 cm and the hypotenuse is 5 cm. Find θ (1 dp).", "53.1°", ["36.9°", "38.7°", "0.8°"], "sin θ = 4 ÷ 5 = 0.8, so θ = sin⁻¹(0.8) = 53.1°."],
+["Pythagoras & trigonometry", "The side adjacent to angle θ is 7 cm and the hypotenuse is 9 cm. Find θ (1 dp).", "38.9°", ["51.1°", "28.4°", "0.8°"], "cos θ = 7 ÷ 9, so θ = cos⁻¹(7/9) = 38.9°."],
+["Pythagoras & trigonometry", "Which calculator function do you use to find an angle when you know two sides?", "An inverse trig function, e.g. sin⁻¹", ["sin", "The square root key", "π"], "Use sin⁻¹, cos⁻¹ or tan⁻¹ to turn a ratio back into an angle."],
+["Pythagoras & trigonometry", "A ramp rises 1.5 m over a horizontal distance of 6 m. Find the angle of the ramp (1 dp).", "14.0°", ["76.0°", "0.25°", "14.5°"], "tan θ = 1.5 ÷ 6 = 0.25, so θ = tan⁻¹(0.25) = 14.0°."],
+["Pythagoras & trigonometry", "A 10 m ladder makes an angle of 70° with the ground. How high up the wall does it reach (1 dp)?", "9.4 m", ["3.4 m", "27.5 m", "10.6 m"], "sin 70° = h ÷ 10, so h = 10 × sin 70° = 9.4."],
+["Measures of centre & spread", "Find the mean of 3, 5, 5, 8, 9.", "6", ["5", "7", "30"], "Sum = 30, then 30 ÷ 5 = 6."],
+["Measures of centre & spread", "Find the median of 3, 5, 5, 8, 9.", "5", ["6", "8", "5.5"], "The data is ordered and the middle value is 5."],
+["Measures of centre & spread", "Find the mode of 3, 5, 5, 8, 9.", "5", ["6", "8", "9"], "The mode is the most common value."],
+["Measures of centre & spread", "Find the median of 4, 9, 2, 7, 8, 6.", "6.5", ["6", "7", "5.5"], "Ordered: 2, 4, 6, 7, 8, 9. The median is (6 + 7) ÷ 2 = 6.5."],
+["Measures of centre & spread", "Find the mean of 12, 15, 18, 20, 25.", "18", ["15", "20", "90"], "Sum = 90, then 90 ÷ 5 = 18."],
+["Measures of centre & spread", "Find the range of 14, 6, 22, 9, 17.", "16", ["28", "22", "6"], "Range = highest − lowest = 22 − 6."],
+["Measures of centre & spread", "A student scores 60, 72, 68 and 80 in four tests. What must she score in the fifth test to have a mean of 72?", "80", ["72", "76", "85"], "She needs a total of 5 × 72 = 360. She has 280, so she needs 80."],
+["Measures of centre & spread", "Which measure of centre is most affected by an outlier?", "Mean", ["Median", "Mode", "Range"], "The mean uses every value, so one extreme value pulls it."],
+["Measures of centre & spread", "Five house prices are $400k, $420k, $450k, $460k and $2.5 million. Which measure of centre best represents a typical house?", "Median", ["Mean", "Range", "Total"], "The median isn’t pulled up by the $2.5 million outlier."],
+["Measures of centre & spread", "Find the IQR of 1, 3, 5, 7, 9, 11, 13, 15.", "8", ["14", "6", "12"], "Q1 = 4 and Q3 = 12, so IQR = Q3 − Q1 = 8."],
+["Measures of centre & spread", "Find the IQR of 2, 3, 5, 6, 8, 9, 11.", "6", ["9", "3", "8"], "The median (6) is left out. Q1 = 3 and Q3 = 9, so IQR = 6."],
+["Measures of centre & spread", "A frequency table shows x = 1, 2, 3 with frequencies 2, 3, 5. Find the mean.", "2.3", ["2", "3", "6"], "Sum of x × f = 2 + 6 + 15 = 23, then 23 ÷ 10 = 2.3."],
+["Measures of centre & spread", "A stem plot has stem 2 with leaves 1 5 8, stem 3 with leaves 0 4 4 9 and stem 4 with leaf 2 (key: 2|1 = 21). Find the median.", "32", ["34", "30", "31"], "The 8 values are 21, 25, 28, 30, 34, 34, 39, 42. The median is (30 + 34) ÷ 2 = 32."],
+["Measures of centre & spread", "For the same stem plot (21, 25, 28, 30, 34, 34, 39, 42), find the mode.", "34", ["30", "39", "21"], "34 appears twice."],
+["Measures of centre & spread", "For the same stem plot (21, 25, 28, 30, 34, 34, 39, 42), find the range.", "21", ["42", "19", "13"], "Range = 42 − 21 = 21."],
+["Measures of centre & spread", "In a stem plot with key 4|7 = 47, which value does 5|0 represent?", "50", ["5.0", "0.5", "57"], "Stem 5 and leaf 0 give 50."],
+["Grouped data & box plots", "What is the class centre of the interval 10–19?", "14.5", ["15", "14", "19"], "(10 + 19) ÷ 2 = 14.5."],
+["Grouped data & box plots", "Grouped data has classes 0–4 (f = 3), 5–9 (f = 5) and 10–14 (f = 2). Estimate the mean.", "6.5", ["7", "5", "65"], "Class centres are 2, 7 and 12. (3×2 + 5×7 + 2×12) ÷ 10 = 65 ÷ 10 = 6.5."],
+["Grouped data & box plots", "A frequency table shows 0–9: 4, 10–19: 11, 20–29: 7. Which is the modal class?", "10–19", ["0–9", "20–29", "11"], "The modal class has the highest frequency."],
+["Grouped data & box plots", "Which statement is true of a histogram of grouped data?", "The bars touch with no gaps", ["The bars have gaps between them", "It shows each exact data value", "It is used for categorical data"], "Histograms show continuous or grouped numerical data."],
+["Grouped data & box plots", "Which values make up the five-number summary?", "Minimum, Q1, median, Q3, maximum", ["Mean, mode, median, range, IQR", "Minimum, mean, median, mode, maximum", "Q1, Q2, Q3, Q4, range"], "These five values are used to draw a box plot."],
+["Grouped data & box plots", "Find the five-number summary of 2, 4, 5, 7, 8, 10, 12.", "2, 4, 7, 10, 12", ["2, 5, 7, 10, 12", "2, 4, 7, 9, 12", "4, 5, 7, 8, 10"], "Min 2, Q1 = 4, median 7, Q3 = 10, max 12."],
+["Grouped data & box plots", "A box plot has min 10, Q1 20, median 26, Q3 40 and max 62. Find the IQR.", "20", ["52", "30", "14"], "IQR = Q3 − Q1 = 40 − 20."],
+["Grouped data & box plots", "A box plot has min 10, Q1 20, median 26, Q3 40 and max 62. Find the range.", "52", ["20", "30", "36"], "Range = max − min = 62 − 10."],
+["Grouped data & box plots", "What percentage of the data lies between Q1 and Q3?", "50%", ["25%", "75%", "100%"], "The box shows the middle half of the data."],
+["Grouped data & box plots", "What does the line inside the box of a box plot show?", "The median", ["The mean", "The mode", "The range"], "The median splits the data into two equal halves."],
+["Grouped data & box plots", "What percentage of the data lies between the minimum and Q1?", "25%", ["50%", "10%", "75%"], "Each quarter of the data holds 25%."],
+["Grouped data & box plots", "A box plot’s median is close to Q1 and the upper whisker is much longer. The distribution is probably…", "Positively skewed", ["Negatively skewed", "Symmetric", "Uniform"], "A long upper tail means the data is skewed to the right."],
+["Grouped data & box plots", "Box plot A has an IQR of 12 and box plot B has an IQR of 25. Which has the greater spread in its middle 50%?", "B", ["A", "They are the same", "Can’t be compared"], "A larger IQR means more spread."],
+["Number: integers, decimals & fractions", "Evaluate −8 + 3.", "−5", ["5", "−11", "11"], "Start at −8 and move 3 right."],
+["Number: integers, decimals & fractions", "Evaluate −6 × −4.", "24", ["−24", "−10", "10"], "A negative times a negative is positive."],
+["Number: integers, decimals & fractions", "Evaluate −3 − (−7).", "4", ["−10", "10", "−4"], "Subtracting a negative is the same as adding: −3 + 7 = 4."],
+["Number: integers, decimals & fractions", "Evaluate 24 ÷ (−3).", "−8", ["8", "−21", "21"], "Positive ÷ negative = negative."],
+["Number: integers, decimals & fractions", "Evaluate 6 + 4 × 3².", "42", ["126", "90", "54"], "Indices first (3² = 9), then multiplication (36), then addition."],
+["Number: integers, decimals & fractions", "Round 3.4567 to 2 decimal places.", "3.46", ["3.45", "3.5", "3.457"], "The third decimal place is 6, so round up."],
+["Number: integers, decimals & fractions", "Round 0.004052 to 2 significant figures.", "0.0041", ["0.0040", "0.004", "0.00405"], "The first significant figure is the 4. The next digit is 0 and the one after is 5, so round up."],
+["Number: integers, decimals & fractions", "How many significant figures are in 0.03050?", "4", ["2", "3", "5"], "Leading zeros don’t count. 3, 0, 5 and the final 0 all count."],
+["Number: integers, decimals & fractions", "Round 25,840 to 3 significant figures.", "25,800", ["25,900", "25,840", "26,000"], "The first three significant figures are 2, 5, 8. The next digit is 4, so round down."],
+["Number: integers, decimals & fractions", "Which of these is NOT a rational number?", "√2", ["0.25", "−3/7", "0.333… (recurring)"], "√2 can’t be written as a fraction of two integers."],
+["Number: integers, decimals & fractions", "Write 0.45 as a fraction in simplest form.", "9/20", ["4/5", "45/10", "9/10"], "45/100 simplifies by dividing by 5."],
+["Number: integers, decimals & fractions", "Evaluate 2/3 + 3/4.", "17/12", ["5/7", "6/12", "5/12"], "8/12 + 9/12 = 17/12."],
+["Number: integers, decimals & fractions", "Evaluate 5/6 − 1/4.", "7/12", ["4/2", "1/2", "4/12"], "10/12 − 3/12 = 7/12."],
+["Number: integers, decimals & fractions", "Evaluate 2/5 × 15/8.", "3/4", ["30/13", "6/5", "17/40"], "30/40 simplifies to 3/4."],
+["Number: integers, decimals & fractions", "Evaluate 3/4 ÷ 9/16.", "4/3", ["27/64", "9/16", "3/4"], "Multiply by the reciprocal: 3/4 × 16/9 = 48/36 = 4/3."],
+["Number: integers, decimals & fractions", "Evaluate 1 1/2 + 2 2/3.", "4 1/6", ["3 3/5", "4 1/5", "3 2/6"], "3/2 + 8/3 = 9/6 + 16/6 = 25/6 = 4 1/6."],
+["Number: integers, decimals & fractions", "Which is the largest: 0.6, 5/8, 61%, 3/5?", "5/8", ["0.6", "61%", "3/5"], "As decimals they are 0.6, 0.625, 0.61 and 0.6."],
+["Index laws", "Evaluate 2⁵.", "32", ["10", "25", "64"], "2 × 2 × 2 × 2 × 2 = 32."],
+["Index laws", "Simplify a⁴ × a³.", "a⁷", ["a¹²", "a", "a⁴³"], "Index Law 1: add the indices when multiplying."],
+["Index laws", "Simplify x⁹ ÷ x².", "x⁷", ["x¹¹", "x¹⁸", "x⁴"], "Index Law 2: subtract the indices when dividing."],
+["Index laws", "Simplify (m³)⁴.", "m¹²", ["m⁷", "m³⁴", "m⁴"], "Index Law 3: multiply the indices for a power of a power."],
+["Index laws", "Evaluate 5⁰.", "1", ["0", "5", "Undefined"], "Any non-zero number to the power of zero is 1."],
+["Index laws", "Simplify (2x)³.", "8x³", ["2x³", "6x³", "8x"], "Apply the power to each factor: 2³ × x³."],
+["Index laws", "Simplify 3x² × 4x⁵.", "12x⁷", ["7x⁷", "12x¹⁰", "12x"], "Multiply the coefficients and add the indices."],
+["Index laws", "Simplify 12a⁶ ÷ 4a².", "3a⁴", ["8a⁴", "3a³", "3a⁸"], "Divide the coefficients and subtract the indices."],
+["Index laws", "Simplify (a²b³)².", "a⁴b⁶", ["a⁴b⁵", "a²b⁶", "a⁴b³"], "Multiply each index by 2."],
+["Index laws", "Evaluate 2⁻³.", "1/8", ["−8", "−6", "1/6"], "A negative index means reciprocal: 2⁻³ = 1/2³."],
+["Index laws", "Write x⁻² with a positive index.", "1/x²", ["−x²", "x²", "−2x"], "x⁻ⁿ = 1/xⁿ."],
+["Index laws", "Simplify 3² × 3⁻⁴.", "1/9", ["9", "−9", "1/81"], "3² × 3⁻⁴ = 3⁻² = 1/3² = 1/9."],
+["Scientific notation & surds", "Write 45,000 in scientific notation.", "4.5 × 10⁴", ["45 × 10³", "4.5 × 10³", "0.45 × 10⁵"], "The first number must be between 1 and 10."],
+["Scientific notation & surds", "Write 0.00032 in scientific notation.", "3.2 × 10⁻⁴", ["3.2 × 10⁴", "3.2 × 10⁻³", "32 × 10⁻⁵"], "Move the decimal point 4 places right, so the power is −4."],
+["Scientific notation & surds", "Write 6.2 × 10⁵ as an ordinary number.", "620,000", ["62,000", "6,200,000", "6,200"], "Move the decimal point 5 places right."],
+["Scientific notation & surds", "Write 7.1 × 10⁻³ as an ordinary number.", "0.0071", ["0.071", "0.00071", "7,100"], "Move the decimal point 3 places left."],
+["Scientific notation & surds", "Evaluate (2 × 10³) × (3 × 10⁴).", "6 × 10⁷", ["6 × 10¹²", "5 × 10⁷", "6 × 10¹"], "Multiply 2 × 3 and add the powers 3 + 4."],
+["Scientific notation & surds", "Evaluate (8 × 10⁶) ÷ (2 × 10²).", "4 × 10⁴", ["4 × 10⁸", "4 × 10³", "16 × 10³"], "Divide 8 ÷ 2 and subtract the powers 6 − 2."],
+["Scientific notation & surds", "Write 5,280,000 in scientific notation to 2 significant figures.", "5.3 × 10⁶", ["5.2 × 10⁶", "5.28 × 10⁶", "53 × 10⁵"], "5.28 rounds to 5.3."],
+["Scientific notation & surds", "Which is larger: 3.2 × 10⁵ or 9.8 × 10⁴?", "3.2 × 10⁵", ["9.8 × 10⁴", "They are equal", "It can’t be determined"], "320,000 is larger than 98,000."],
+["Scientific notation & surds", "Evaluate 25^(1/2).", "5", ["12.5", "625", "50"], "A power of 1/2 means the square root."],
+["Scientific notation & surds", "Evaluate 8^(1/3).", "2", ["4", "24", "2.67"], "A power of 1/3 means the cube root."],
+["Scientific notation & surds", "Write √7 using an index.", "7^(1/2)", ["7²", "7^(−2)", "2^7"], "√x = x^(1/2)."],
+["Scientific notation & surds", "Simplify √50.", "5√2", ["25√2", "10√5", "2√25"], "√50 = √25 × √2 = 5√2."],
+["Scientific notation & surds", "Simplify √12.", "2√3", ["3√2", "6", "4√3"], "√12 = √4 × √3 = 2√3."],
+["Scientific notation & surds", "Simplify √3 × √5.", "√15", ["15", "√8", "8"], "√a × √b = √(ab)."],
+["Scientific notation & surds", "Simplify 3√2 + 5√2.", "8√2", ["15√2", "8√4", "8"], "Add the coefficients of like surds."],
+["Scientific notation & surds", "Simplify 7√3 − 2√3.", "5√3", ["5", "9√3", "14√3"], "Subtract the coefficients of like surds."],
+["Scientific notation & surds", "Simplify 2√5 × 3√5.", "30", ["6√5", "6√10", "15"], "2 × 3 = 6 and √5 × √5 = 5, so 6 × 5 = 30."],
+["Perimeter, area & errors", "A length is measured as 12.5 cm to the nearest 0.1 cm. What is the absolute error?", "±0.05 cm", ["±0.5 cm", "±0.1 cm", "±0.005 cm"], "The absolute error is half the smallest unit: 0.1 ÷ 2 = 0.05."],
+["Perimeter, area & errors", "A length is measured as 8.4 cm to the nearest 0.1 cm. Between which two values could the true length lie?", "8.35 cm and 8.45 cm", ["8.3 cm and 8.5 cm", "8.0 cm and 9.0 cm", "8.39 cm and 8.41 cm"], "8.4 ± 0.05."],
+["Perimeter, area & errors", "Find the perimeter of a rectangle that is 8.5 cm by 4 cm.", "25 cm", ["34 cm", "12.5 cm", "32 cm"], "P = 2 × (8.5 + 4) = 25."],
+["Perimeter, area & errors", "Find the circumference of a circle with radius 5 cm (1 dp).", "31.4 cm", ["78.5 cm", "15.7 cm", "25.0 cm"], "C = 2πr = 2 × π × 5 = 31.4."],
+["Perimeter, area & errors", "Find the arc length of a sector with radius 6 cm and angle 90° (1 dp).", "9.4 cm", ["37.7 cm", "18.8 cm", "28.3 cm"], "It is 90/360 = 1/4 of the circumference: 2π × 6 ÷ 4 = 9.4."],
+["Perimeter, area & errors", "Find the perimeter of a sector with radius 6 cm and angle 90° (1 dp).", "21.4 cm", ["9.4 cm", "15.4 cm", "33.7 cm"], "Add the two radii to the arc: 9.4 + 6 + 6 = 21.4."],
+["Perimeter, area & errors", "Find the area of a triangle with base 12 cm and height 7 cm.", "42 cm²", ["84 cm²", "19 cm²", "21 cm²"], "A = ½ × 12 × 7 = 42."],
+["Perimeter, area & errors", "Find the area of a circle with radius 4 cm (1 dp).", "50.3 cm²", ["25.1 cm²", "201.1 cm²", "16.0 cm²"], "A = πr² = π × 16 = 50.3."],
+["Perimeter, area & errors", "Find the area of a trapezium with parallel sides 5 cm and 9 cm and a height of 4 cm.", "28 cm²", ["56 cm²", "45 cm²", "14 cm²"], "A = ½(5 + 9) × 4 = 28."],
+["Perimeter, area & errors", "Find the area of a rhombus with diagonals 8 cm and 6 cm.", "24 cm²", ["48 cm²", "14 cm²", "28 cm²"], "A = ½ × 8 × 6 = 24."],
+["Perimeter, area & errors", "A shape is a 10 cm by 6 cm rectangle with a semicircle of diameter 6 cm on one of the 6 cm sides. Find its area (1 dp).", "74.1 cm²", ["88.3 cm²", "45.9 cm²", "65.7 cm²"], "Rectangle 60 + semicircle ½ × π × 3² = 14.1, so 74.1."],
+["Perimeter, area & errors", "Convert 2.5 m² to cm².", "25,000 cm²", ["250 cm²", "2,500 cm²", "250,000 cm²"], "1 m² = 100 × 100 = 10,000 cm²."],
+["Surface area & volume", "Find the volume of a rectangular prism that is 5 cm by 4 cm by 3 cm.", "60 cm³", ["94 cm³", "47 cm³", "12 cm³"], "V = l × w × h = 60."],
+["Surface area & volume", "Find the surface area of a rectangular prism that is 5 cm by 4 cm by 3 cm.", "94 cm²", ["60 cm²", "47 cm²", "188 cm²"], "2(5×4 + 5×3 + 4×3) = 2(47) = 94."],
+["Surface area & volume", "A triangular prism has a triangular end with base 6 cm and height 4 cm, and a length of 10 cm. Find its volume.", "120 cm³", ["240 cm³", "24 cm³", "60 cm³"], "V = area of cross-section × length = 12 × 10."],
+["Surface area & volume", "A right-angled triangular prism has end sides of 3 cm, 4 cm and 5 cm and a length of 10 cm. Find its surface area.", "132 cm²", ["72 cm²", "120 cm²", "60 cm²"], "Two triangles 2 × 6 = 12, plus rectangles (3 + 4 + 5) × 10 = 120."],
+["Surface area & volume", "Find the volume of a cylinder with radius 3 cm and height 10 cm (1 dp).", "282.7 cm³", ["94.2 cm³", "565.5 cm³", "90.0 cm³"], "V = πr²h = π × 9 × 10."],
+["Surface area & volume", "Find the surface area of a cylinder with radius 3 cm and height 10 cm (1 dp).", "245.0 cm²", ["282.7 cm²", "188.5 cm²", "226.2 cm²"], "2πr² + 2πrh = 56.5 + 188.5 = 245.0."],
+["Surface area & volume", "Find the volume of a cylinder with diameter 10 cm and height 4 cm (1 dp).", "314.2 cm³", ["1,256.6 cm³", "125.7 cm³", "157.1 cm³"], "The radius is 5 cm, so V = π × 25 × 4."],
+["Surface area & volume", "Find the volume of a square pyramid with base side 6 cm and height 5 cm.", "60 cm³", ["180 cm³", "30 cm³", "90 cm³"], "V = ⅓ × 36 × 5 = 60."],
+["Surface area & volume", "What is the formula for the volume of a pyramid?", "⅓ × base area × height", ["Base area × height", "½ × base area × height", "Base × height"], "A pyramid is one third of the matching prism."],
+["Surface area & volume", "Find the surface area of a cube with side length 5 cm.", "150 cm²", ["125 cm²", "25 cm²", "100 cm²"], "6 faces × 25 cm² = 150."],
+["Surface area & volume", "How many cm³ are in 1 m³?", "1,000,000", ["100", "1,000", "10,000"], "1 m = 100 cm, so 1 m³ = 100 × 100 × 100 cm³."],
+["Surface area & volume", "A fish tank is 50 cm long, 30 cm wide and 40 cm high. How many litres can it hold?", "60 L", ["6 L", "600 L", "60,000 L"], "V = 60,000 cm³ and 1,000 cm³ = 1 L."],
+["Angles, polygons & parallel lines", "What do the angles in a triangle add up to?", "180°", ["360°", "90°", "270°"], "Angle sum of a triangle."],
+["Angles, polygons & parallel lines", "Two angles in a triangle are 48° and 67°. Find the third angle.", "65°", ["115°", "75°", "55°"], "180 − 48 − 67 = 65."],
+["Angles, polygons & parallel lines", "An exterior angle of a triangle equals…", "The sum of the two opposite interior angles", ["The adjacent interior angle", "180°", "The third interior angle"], "This is the exterior angle theorem."],
+["Angles, polygons & parallel lines", "An isosceles triangle has an apex angle of 40°. Find each base angle.", "70°", ["140°", "40°", "80°"], "(180 − 40) ÷ 2 = 70."],
+["Angles, polygons & parallel lines", "Parallel lines are cut by a transversal. Corresponding angles are…", "Equal", ["Supplementary (add to 180°)", "Complementary (add to 90°)", "Always 90°"], "Corresponding angles are in matching positions (F shape)."],
+["Angles, polygons & parallel lines", "Parallel lines are cut by a transversal. Alternate angles are…", "Equal", ["Supplementary (add to 180°)", "Complementary (add to 90°)", "Always 90°"], "Alternate angles are on opposite sides of the transversal (Z shape)."],
+["Angles, polygons & parallel lines", "Parallel lines are cut by a transversal. Co-interior angles…", "Add to 180°", ["Are equal", "Add to 90°", "Add to 360°"], "Co-interior angles are on the same side (C or U shape)."],
+["Angles, polygons & parallel lines", "Parallel lines are cut by a transversal. One angle is 115°. Find its co-interior angle.", "65°", ["115°", "25°", "245°"], "Co-interior angles add to 180°, so 180 − 115 = 65."],
+["Angles, polygons & parallel lines", "Find the sum of the interior angles of a pentagon.", "540°", ["360°", "720°", "450°"], "(n − 2) × 180 = 3 × 180."],
+["Angles, polygons & parallel lines", "Find the sum of the interior angles of a hexagon.", "720°", ["540°", "1,080°", "360°"], "(6 − 2) × 180 = 720."],
+["Angles, polygons & parallel lines", "Find each interior angle of a regular octagon.", "135°", ["45°", "120°", "108°"], "(8 − 2) × 180 ÷ 8 = 135."],
+["Angles, polygons & parallel lines", "The exterior angles of any polygon add to…", "360°", ["180°", "540°", "It depends on the number of sides"], "The exterior angle sum is always 360°."],
+["Angles, polygons & parallel lines", "Find each exterior angle of a regular hexagon.", "60°", ["120°", "30°", "45°"], "360 ÷ 6 = 60."],
+["Angles, polygons & parallel lines", "The angles in any quadrilateral add to…", "360°", ["180°", "270°", "720°"], "A quadrilateral can be split into two triangles."],
+["Angles, polygons & parallel lines", "Which quadrilateral has four equal sides and diagonals that cross at right angles, but angles that aren’t necessarily 90°?", "Rhombus", ["Rectangle", "Trapezium", "Kite"], "A square is a special rhombus."],
+["Angles, polygons & parallel lines", "Two angles on a straight line are x and 3x. Find x.", "45°", ["60°", "30°", "90°"], "x + 3x = 180, so 4x = 180."],
+["Congruent & similar triangles", "Which is NOT a test for congruent triangles?", "AAA", ["SSS", "SAS", "RHS"], "Equal angles alone only prove similarity, not congruence."],
+["Congruent & similar triangles", "Two triangles both have sides 5 cm, 7 cm and 9 cm. Which test proves they are congruent?", "SSS", ["SAS", "RHS", "AAS"], "All three pairs of sides are equal."],
+["Congruent & similar triangles", "Two pairs of sides and the included angle are equal. Which test is this?", "SAS", ["SSS", "RHS", "AAS"], "The angle must be between the two sides."],
+["Congruent & similar triangles", "Two right-angled triangles have equal hypotenuses and one other equal side. Which test proves they are congruent?", "RHS", ["SSS", "SAS", "AAA"], "RHS = Right angle, Hypotenuse, Side."],
+["Congruent & similar triangles", "Two triangles are similar with a scale factor of 2.5. A side of 6 cm in the small triangle matches which side in the large triangle?", "15 cm", ["8.5 cm", "12 cm", "2.4 cm"], "Multiply by the scale factor: 6 × 2.5 = 15."],
+["Congruent & similar triangles", "Two triangles are similar. A 4 cm side matches a 12 cm side. What does a 7 cm side in the small triangle match?", "21 cm", ["15 cm", "28 cm", "19 cm"], "The scale factor is 12 ÷ 4 = 3, and 7 × 3 = 21."],
+["Congruent & similar triangles", "Which condition proves that two triangles are similar?", "All three angles are equal", ["Two sides are equal", "One side and one angle are equal", "The perimeters are equal"], "Similar triangles have equal angles and sides in proportion."],
+["Congruent & similar triangles", "Triangle A has sides 3, 4 and 5 and triangle B has sides 6, 8 and 10. What is true of them?", "They are similar, because the sides are in the same ratio", ["They are congruent, because both are right-angled", "They are congruent by SSS", "They are neither similar nor congruent"], "Each side in B is 2 times the matching side in A."],
+["Congruent & similar triangles", "Triangles ABC and DEF have ∠A = ∠D = 50° and ∠B = ∠E = 60°. What can you conclude?", "They are similar (AA)", ["They are congruent by SSS", "They are congruent by SAS", "Nothing"], "Two equal angles mean the third is equal too."],
+["Congruent & similar triangles", "A 2 m pole casts a 3 m shadow. At the same time a tree casts a 12 m shadow. How tall is the tree?", "8 m", ["18 m", "10 m", "6 m"], "The triangles are similar: 2/3 = h/12, so h = 8."],
+["Congruent & similar triangles", "Which statement is true?", "Congruent triangles are always similar", ["Similar triangles are always congruent", "Congruent triangles can have different sizes", "Similar triangles must have equal areas"], "Congruent triangles are a special case of similar triangles with scale factor 1."],
+["Probability: sets & tables", "What is the probability of rolling an even number on a fair six-sided die?", "1/2", ["1/3", "1/6", "2/3"], "3 even outcomes out of 6."],
+["Probability: sets & tables", "What is the probability of not rolling a 6 on a fair die?", "5/6", ["1/6", "1/5", "6/5"], "P(not A) = 1 − P(A)."],
+["Probability: sets & tables", "Which value cannot be a probability?", "1.2", ["0", "0.5", "1"], "Probabilities are between 0 and 1."],
+["Probability: sets & tables", "A bag has 3 red, 5 blue and 2 green marbles. What is P(green)?", "1/5", ["1/10", "2/8", "1/3"], "2 ÷ 10 = 1/5."],
+["Probability: sets & tables", "A bag has 3 red, 5 blue and 2 green marbles. What is P(red or green)?", "1/2", ["3/10", "2/5", "1/5"], "5 favourable outcomes out of 10."],
+["Probability: sets & tables", "Of 30 students, 18 play netball, 12 play soccer and 5 play both. How many play neither?", "5", ["0", "7", "12"], "Netball or soccer = 18 + 12 − 5 = 25, so neither = 30 − 25."],
+["Probability: sets & tables", "In set notation, A ∩ B means…", "In both A and B", ["In A or B or both", "Not in A", "In A only"], "∩ is the intersection."],
+["Probability: sets & tables", "In set notation, A ∪ B means…", "In A or B (or both)", ["In both A and B", "Not in A", "In A only"], "∪ is the union."],
+["Probability: sets & tables", "In set notation, A′ means…", "Everything not in A", ["Everything in A", "Everything in A and B", "The empty set"], "A′ is the complement of A."],
+["Probability: sets & tables", "n(A) = 12, n(B) = 9 and n(A ∩ B) = 4. Find n(A ∪ B).", "17", ["21", "13", "8"], "12 + 9 − 4 = 17."],
+["Probability: sets & tables", "In a survey of 50 people, 20 own a dog, 15 own a cat and 8 own both. How many own neither?", "23", ["27", "7", "12"], "Dog or cat = 20 + 15 − 8 = 27, so neither = 50 − 27."],
+["Probability: sets & tables", "In the same survey of 50 people (20 dog, 15 cat, 8 both), find P(owns a dog only).", "6/25", ["2/5", "4/25", "7/50"], "Dog only = 20 − 8 = 12, so 12/50 = 6/25."],
+["Probability: sets & tables", "How many outcomes are there when two six-sided dice are rolled?", "36", ["12", "6", "18"], "6 × 6 = 36. An array shows all outcomes."],
+["Probability: sets & tables", "Two fair dice are rolled. Find P(sum is 7).", "1/6", ["1/12", "7/36", "1/7"], "6 of the 36 outcomes give a sum of 7."],
+["Probability: sets & tables", "Two fair dice are rolled. Find P(sum is 5).", "1/9", ["1/12", "5/36", "1/6"], "4 outcomes out of 36: (1,4), (2,3), (3,2), (4,1)."],
+["Probability: tree diagrams & frequency", "A coin is tossed twice. Find P(two heads).", "1/4", ["1/2", "1/3", "3/4"], "1/2 × 1/2 = 1/4."],
+["Probability: tree diagrams & frequency", "A coin is tossed twice. Find P(exactly one head).", "1/2", ["1/4", "1/3", "3/4"], "HT and TH are 2 of the 4 outcomes."],
+["Probability: tree diagrams & frequency", "A coin is tossed twice. Find P(at least one head).", "3/4", ["1/4", "1/2", "2/3"], "1 − P(no heads) = 1 − 1/4."],
+["Probability: tree diagrams & frequency", "A bag has 2 red and 3 blue counters. One is picked, replaced, then another is picked. Find P(both red).", "4/25", ["4/10", "2/5", "1/5"], "2/5 × 2/5 = 4/25."],
+["Probability: tree diagrams & frequency", "A bag has 2 red and 3 blue counters. Two are picked without replacement. Find P(both red).", "1/10", ["4/25", "2/5", "1/4"], "2/5 × 1/4 = 2/20 = 1/10."],
+["Probability: tree diagrams & frequency", "A bag has 2 red and 3 blue counters. One is picked, replaced, then another is picked. Find P(one red and one blue, in any order).", "12/25", ["6/25", "3/5", "1/2"], "2 × (2/5 × 3/5) = 12/25. Add the two paths."],
+["Probability: tree diagrams & frequency", "A spinner lands on red with probability 0.3. It is spun twice. Find P(red then red).", "0.09", ["0.6", "0.3", "0.9"], "0.3 × 0.3 = 0.09."],
+["Probability: tree diagrams & frequency", "On a tree diagram, how do you find the probability of a path such as red then blue?", "Multiply the probabilities along the branches", ["Add them", "Subtract them", "Divide them"], "Multiply along the branches and add the results of different paths."],
+["Probability: tree diagrams & frequency", "What do the probabilities of all outcomes in an experiment add up to?", "1", ["0", "100", "It depends on the experiment"], "One of the outcomes must happen."],
+["Probability: tree diagrams & frequency", "A drawing pin lands point-up 36 times in 120 trials. What is the relative frequency of point-up?", "0.3", ["0.36", "3.3", "0.03"], "36 ÷ 120 = 0.3."],
+["Probability: tree diagrams & frequency", "The relative frequency of a pin landing point-up is 0.3. How many point-ups would you expect in 500 drops?", "150", ["30", "300", "360"], "0.3 × 500 = 150."],
+["Probability: tree diagrams & frequency", "As the number of trials increases, the relative frequency tends to…", "Get closer to the theoretical probability", ["Become exactly equal after 10 trials", "Move away from the theoretical probability", "Always equal 0.5"], "More trials give a better estimate."],
+["CAS calculator", "Which CAS command would you use to expand 3(x + 2)?", "expand(3(x + 2))", ["solve(3(x + 2))", "factor(3(x + 2))", "mean(3(x + 2))"], "expand removes brackets."],
+["CAS calculator", "Which CAS command solves 2x + 3 = 11 for x?", "solve(2x + 3 = 11, x)", ["expand(2x + 3 = 11)", "factor(2x + 3 = 11)", "mean(2x + 3 = 11)"], "solve finds the value of the pronumeral. Here x = 4."],
+["CAS calculator", "Before finding an angle with sin⁻¹, which mode should the calculator be in?", "Degree mode", ["Radian mode", "Gradian mode", "Statistics mode"], "Radian mode would give the wrong answer for angles in degrees."],
+["CAS calculator", "A calculator shows sin⁻¹(0.5) = 30°. What does this mean?", "30° is the angle whose sine is 0.5", ["The sine of 0.5 is 30", "The angle is 0.5°", "The hypotenuse is 30"], "The inverse function turns a ratio back into an angle."],
+["CAS calculator", "How can you find the x-intercept of y = 2x − 6 on a graph or CAS calculator?", "Find where the line meets the x-axis (set y = 0 and solve)", ["Read where it crosses the y-axis", "Find the gradient", "Find the largest y-value"], "At the x-intercept y = 0."],
+// Exam practice
+["Exam practice","Calculate the simple interest on $3,000 at 4% p.a. for 5 years.","$600",["$120","$150","$2,400"],"I = PRT = 3,000 × 0.04 × 5 = 600."],
+["Exam practice","Calculate the value of $2,000 invested at 5% p.a. compounded annually for 3 years.","$2,315.25",["$2,300","$2,310","$2,400"],"2,000 × 1.05³ = 2,315.25."],
+["Exam practice","A jacket costs $350 and is discounted by 30%. Calculate the sale price.","$245",["$105","$320","$280"],"350 × 0.70 = 245."],
+["Exam practice","Share $120 in the ratio 1 : 5. How much is the larger share?","$100",["$20","$24","$60"],"120 ÷ 6 = 20, then 5 × 20 = 100."],
+["Exam practice","Mia earns $20/hour. Calculate her pay for 8 hours at double time.","$320",["$160","$240","$400"],"8 × 20 × 2 = 320."],
+["Exam practice","Calculate the tax payable on a taxable income of $60,000 (use $4,288 plus 30c for each $1 over $45,000).","$8,788",["$4,500","$18,000","$13,288"],"4,288 + 0.30 × 15,000 = 8,788."],
+["Exam practice","Calculate the Medicare levy (2%) on a taxable income of $60,000.","$1,200",["$600","$2,000","$120"],"0.02 × 60,000 = 1,200."],
+["Exam practice","Classify: the number of goals scored by a player each game.","Numerical discrete",["Numerical continuous","Categorical nominal","Categorical ordinal"],"Goals are counted, so only whole-number values are possible."],
+["Exam practice","Identify the sampling method: every 10th person leaving a stadium is surveyed.","Systematic sampling",["Simple random sampling","Stratified sampling","Census"],"Individuals are selected at regular intervals."],
+["Exam practice","Describe the distribution of a histogram with a long tail pointing to the left.","Negatively skewed",["Positively skewed","Symmetric","Uniform"],"The direction of the tail gives the skew."]
+];
+const METHODS=[
+// Algebra
+["Algebra","Letters used to represent numbers in algebra are called…","Pronumerals (variables)",["Constants","Coefficients","Brackets"],"E.g. “Bob has m toys”."],
+["Algebra","Bob has m toys and buys 6 more. How many does he have now?","m + 6",["6m","m − 6","m ÷ 6"],"This is an expression."],
+["Algebra","Write an expression: five less than x","x − 5",["5 − x","5x","x + 5"],"“Less than” means subtract from x."],
+["Algebra","Write an expression: three more than twice x","2x + 3",["3x + 2","2(x + 3)","x + 6"],"Twice x is 2x, then add 3."],
+["Algebra","Write an expression: the sum of a and b is divided by 4","(a + b) ÷ 4",["a + b ÷ 4","4(a + b)","a ÷ 4 + b"],"The brackets show the whole sum is divided."],
+["Algebra","Write an expression: the square of the sum of x and y","(x + y)²",["x² + y²","2(x + y)","x + y²"],"Add first, then square."],
+["Algebra","What is the cost of P pies at $3 each?","3P",["P + 3","P ÷ 3","3 − P"],"When there’s no sign, it’s times."],
+["Algebra","300 g of peanuts is shared equally among C children. How many grams does each child get?","300 ÷ C",["300C","300 − C","C ÷ 300"],"Sharing equally means dividing."],
+["Algebra","Simplify 3 × 2b","6b",["5b","6","32b"],"3 × 2 × b = 6b."],
+["Algebra","Simplify −2a × 3ab","−6a²b",["−6ab","6a²b","−5a²b"],"−2 × 3 = −6 and a × a = a²."],
+["Algebra","Simplify 3x + 2y + 4x + 7y","7x + 9y",["16xy","7x + 5y","9x + 7y"],"Collect like terms."],
+["Algebra","Simplify 3x + 4 − 2x","x + 4",["5x + 4","x − 4","x + 2"],"3x − 2x = x."],
+["Algebra","Simplify 2x + 5y + 4x − y","6x + 4y",["6x + 6y","6x − 4y","10xy"],"5y − y = 4y."],
+["Algebra","Simplify 8ab² − 9ab − ab² + 3ba","7ab² − 6ab",["6ab²","7ab² + 12ab","8ab² − 6ab"],"3ba is the same as 3ab, so −9ab + 3ab = −6ab."],
+["Algebra","Which pair are like terms?","3x and −7x",["3x and 3y","2x² and 2x","4ab and 4a"],"Like terms have the same pronumerals and powers."],
+["Algebra","Expand 3(x + 4)","3x + 12",["3x + 4","x + 12","3x + 7"],"The distributive law: multiply every term inside the bracket."],
+["Algebra","What are the two steps when expanding and simplifying?","Expand the brackets, then collect like terms",["Collect like terms, then expand","Divide, then multiply","Add both sides"],"Step 1 expand with the distributive law. Step 2 collect like terms."],
+["Algebra","Solve 2y + 6 = 3y − 4","y = 10",["y = −10","y = 2","y = −2"],"Subtract 2y from both sides: 6 = y − 4, so y = 10."],
+["Algebra","Solve 5x − 2 = 3x − 4","x = −1",["x = 1","x = 3","x = −3"],"2x = −2, so x = −1."],
+["Algebra","Solve 3(2x + 4) = 8(x + 1)","x = 2",["x = −2","x = 1","x = 4"],"6x + 12 = 8x + 8, so 4 = 2x and x = 2."],
+// Exam practice
+["Exam practice","Expand and simplify 2(x + 3) + 4(x − 1)","6x + 2",["6x + 10","6x + 5","2x + 2"],"2x + 6 + 4x − 4 = 6x + 2."],
+["Exam practice","Expand −3(2x − 5)","−6x + 15",["−6x − 15","−6x − 5","6x + 15"],"Multiply every term by −3: −3 × 2x = −6x and −3 × −5 = +15."],
+["Exam practice","Solve 4x + 7 = 23","x = 4",["x = 7.5","x = 6","x = −4"],"4x = 16, so x = 4."],
+["Exam practice","Solve 3(x − 2) = 2x + 5","x = 11",["x = 1","x = 3","x = −1"],"3x − 6 = 2x + 5, so x = 11."],
+["Exam practice","Solve x/3 + 2 = 6","x = 12",["x = 24","x = 4/3","x = 8/3"],"x/3 = 4, so x = 12."],
+["Exam practice","Write an expression: the product of 5 and the sum of x and 2","5(x + 2)",["5x + 2","5 + x + 2","x + 10"],"Sum first (x + 2), then multiply by 5."],
+["Exam practice","Simplify 12a²b ÷ 4ab","3a",["3ab","8a","3a²"],"12 ÷ 4 = 3, a² ÷ a = a and b ÷ b = 1."],
+["Exam practice","Evaluate 3x² − x when x = −2","14",["−14","10","−10"],"3(−2)² − (−2) = 12 + 2 = 14."]
+];
+const BANK={"Sports Performance":SPORTS,"English":ENGLISH,"Health":HEALTH,"Outdoor Ed":OUTDOOR,"Food Tech":FOOD,"General Maths":GENERAL,"Maths Methods":METHODS};
+const TYPES=[["mc","Multiple choice"],["tf","True / False"],["type","Type the answer"],["mix","Mixed"]];
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const shuffle=a=>{a=a.slice();for(let k=a.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[a[k],a[j]]=[a[j],a[k]]}return a};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const show=id=>["home","play","end"].forEach(s=>$(s).classList.toggle("hide",s!==id));
+let cls=Object.keys(BANK)[0],sel=new Set(),type="mc",deck=[],i=0,score=0,missed=[],locked=false;
+
+function chipRow(el,items,isOn,click){el.innerHTML="";items.forEach(([v,l])=>{const b=document.createElement("button");b.className="chip"+(isOn(v)?" on":"");b.textContent=l;b.onclick=()=>click(v);el.append(b)})}
+const topicsOf=c=>[...new Set(BANK[c].map(q=>q[0]))];
+function drawAll(){
+ chipRow($("classes"),Object.keys(BANK).map(c=>[c,c]),c=>c===cls,c=>{cls=c;sel=new Set(topicsOf(c));drawAll()});
+ chipRow($("chips"),topicsOf(cls).map(t=>[t,t]),t=>sel.has(t),t=>{if(t==="Exam practice"&&sel.has(t)){warnOn();return}sel.has(t)?sel.delete(t):sel.add(t);drawAll()});
+ chipRow($("types"),TYPES,t=>t===type,t=>{type=t;drawAll()});
+ $("avail").textContent=BANK[cls].filter(q=>sel.has(q[0])).length+" questions available with your topics";
+}
+sel=new Set(topicsOf(cls));drawAll();
+
+let warnT;function warnOn(){const w=$("warn");w.classList.remove("hide");flash(false);clearTimeout(warnT);warnT=setTimeout(()=>w.classList.add("hide"),3000)}
+function flash(ok){const f=$("flash");f.className=ok?"green":"red";void f.offsetWidth;f.className+=" show"}
+function build(q,kind){if(kind==="mix")kind=pick(["mc","tf","type"]);
+ const truth=Math.random()<.5;return{q,kind,truth,prop:truth?q[2]:pick(q[3])}}
+function begin(items){deck=items;i=0;score=0;missed=[];show("play");render()}
+function newDeck(){const pool=BANK[cls].filter(q=>sel.has(q[0]));if(!pool.length){alert("Pick at least one topic");return null}
+ let n=parseInt($("count").value,10);if(!n||n<1)n=10;n=Math.min(n,pool.length);
+ return shuffle(pool).slice(0,n).map(q=>build(q,type))}
+$("start").onclick=()=>{const d=newDeck();if(d)begin(d)};
+
+const stop=new Set("a an the of to and in is it that for on as by with at be or are was were from this".split(" "));
+const toks=s=>s.toLowerCase().replace(/(\d),(?=\d{3})/g,"$1").replace(/[^a-z0-9. ]/g," ").split(/\s+/).map(w=>w.replace(/^\.+|\.+$/g,"")).filter(w=>w&&!stop.has(w));
+function check(inp,ans){const a=toks(ans),t=toks(inp);if(!t.length)return false;
+ const hit=a.filter(w=>t.includes(w)||(a.length>1&&w.length>4&&t.some(x=>x.length>4&&x.slice(0,4)===w.slice(0,4)))).length;return hit/a.length>=.7}
+
+function settle(ok,msg){locked=true;const d=deck[i];if(ok)score++;else missed.push(d);flash(ok);
+ $("score").textContent=`Score: ${score}`;$("exp").innerHTML=msg+" "+esc(d.q[4]);$("exp").classList.remove("hide");
+ $("next").textContent=i+1<deck.length?"Next":"See results";$("next").classList.remove("hide")}
+
+function render(){locked=false;const d=deck[i],q=d.q,body=$("body");
+ $("pos").textContent=`Question ${i+1} of ${deck.length}`;$("score").textContent=`Score: ${score}`;
+ $("prog").style.width=(i/deck.length*100)+"%";$("topic").textContent=q[0];$("q").textContent=q[1];
+ $("exp").classList.add("hide");$("next").classList.add("hide");$("fix").classList.add("hide");body.innerHTML="";
+ const btn=(t,f)=>{const b=document.createElement("button");b.className="opt";b.textContent=t;b.onclick=()=>f(b);return b};
+ if(d.kind==="mc"){shuffle([q[2],...q[3]]).forEach(o=>body.append(btn(o,b=>{if(locked)return;const ok=o===q[2];
+   [...body.children].forEach(x=>{x.disabled=true;if(x.textContent===q[2])x.classList.add("right")});if(!ok)b.classList.add("wrong");
+   settle(ok,ok?"<b>Correct!</b>":"<b>Not quite.</b> Answer: "+esc(q[2])+".")})))}
+ else if(d.kind==="tf"){body.innerHTML=`<div class="prop">${esc(d.prop)}</div><div style="margin-bottom:8px;color:var(--mute)">Is this the correct answer?</div>`;
+  [["True",true],["False",false]].forEach(([l,v])=>body.append(btn(l,b=>{if(locked)return;const ok=v===d.truth;
+   [...body.querySelectorAll(".opt")].forEach(x=>{x.disabled=true;if(x.textContent===(d.truth?"True":"False"))x.classList.add("right")});if(!ok)b.classList.add("wrong");
+   settle(ok,(ok?"<b>Correct!</b> ":"<b>Not quite.</b> ")+(d.truth?"That was the correct answer.":"The correct answer is: "+esc(q[2])+"."))})))}
+ else{body.innerHTML='<input class="inp" id="ans" placeholder="Type your answer" autocomplete="off"><button class="btn" id="chk" style="margin-top:8px">Check</button>';
+  const go=()=>{if(locked)return;const v=$("ans").value.trim();if(!v)return;$("ans").disabled=true;$("chk").classList.add("hide");const ok=check(v,q[2]);
+   settle(ok,ok?"<b>Correct!</b> Answer: "+esc(q[2])+".":"<b>Not quite.</b> Answer: "+esc(q[2])+".");if(!ok)$("fix").classList.remove("hide")};
+  $("chk").onclick=go;$("ans").onkeydown=e=>{if(e.key==="Enter")go()};$("ans").focus()}}
+$("fix").onclick=()=>{missed.pop();score++;$("score").textContent=`Score: ${score}`;$("fix").classList.add("hide");$("exp").innerHTML="<b>Counted as correct.</b> Answer: "+esc(deck[i].q[2])+". "+esc(deck[i].q[4]);flash(true)};
+$("next").onclick=()=>{i++;i<deck.length?render():finish()};
+
+function finish(){show("end");const p=Math.round(score/deck.length*100);
+ $("final").textContent=`${score} / ${deck.length} (${p}%)`;
+ $("msg").textContent=p>=90?"Outstanding!":p>=70?"Solid work. Review the misses below.":"Keep practising. You’ll get there.";
+ $("miss").innerHTML=missed.map(d=>`<li><b>${esc(d.q[1])}</b><br>${esc(d.q[2])}</li>`).join("");
+ $("missWrap").classList.toggle("hide",!missed.length);$("redo").classList.toggle("hide",!missed.length)}
+$("again").onclick=()=>{const d=newDeck();if(d)begin(d)};
+$("redo").onclick=()=>begin(shuffle(missed.map(d=>build(d.q,type))));
+$("home2").onclick=()=>show("home");
+</script></body></html>
